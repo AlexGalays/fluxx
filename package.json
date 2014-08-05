@@ -1,0 +1,20 @@
+{
+  "name": "fluxx",
+  "version": "0.0.1",
+  "description": "Facebook flux modules",
+  "keywords": ["flux", "facebook", "dispatcher", "store", "action"],
+  "homepage": "https://github.com/AlexGalays/fluxx/",
+
+  "author": {
+    "name": "Alexandre Galays",
+    "url": "https://github.com/AlexGalays/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlexGalays/fluxx.git"
+  },
+
+  "dependencies": {
+    "signals": "1.0.0"
+  }
+}
