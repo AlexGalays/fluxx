@@ -16,8 +16,7 @@ var names = {};
 */
 function Action(name) {
 
-  invariant(
-    !names[name],
+  invariant(!names[name],
     'An action with the name %s already exists',
     name
   );

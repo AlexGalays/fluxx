@@ -1,4 +1,3 @@
-var Signal    = require('signals').Signal;
 var Store     = require('../../src/Store');
 var actions   = require('./actions');
 
@@ -7,28 +6,23 @@ var decrement = actions.decrement;
 var increment = actions.increment;
 
 
-var value = 0;
-var changed = new Signal();
+module.exports = Store(function(on, waitFor) {
 
+  var value = 0;
 
-module.exports = Store({
-  changed: changed,
-  value: function() { return value },
+  on(init, function(val) {
+    value = val;
+  });
 
-  actions: [
-    init, function(val) {
-      value = val;
-      changed.dispatch();
-    },
+  on(decrement, function(offset) {
+    value -= offset;
+  });
 
-    decrement, function(offset) {
-      value -= offset;
-      changed.dispatch();
-    },
+  on(increment, function(offset) {
+    value += offset;
+  });
 
-    increment, function(offset) {
-      value += offset;
-      changed.dispatch();
-    }
-  ]
+  return {
+    value: function() { return value }
+  };
 });

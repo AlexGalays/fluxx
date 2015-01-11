@@ -6,10 +6,12 @@ var greenNumber = require('./greenNumber');
 var redNumber   = require('./redNumber');
 var App         = require('./App');
 var init        = require('./actions').init;
-var Store       = require('../../src/Store');
+var onChange    = require('../../src/Store').onChange;
 
 
 function render() {
+  console.log('render');
+
   return React.renderComponent(
     <App 
       blueNumber={blueNumber.value()} 
@@ -20,11 +22,6 @@ function render() {
   );
 }
 
-Store.when(
-  blueNumber.changed,
-  greenNumber.changed,
-  redNumber.changed
-)
-.add(render);
+onChange(blueNumber, greenNumber, redNumber)(render);
 
 init(10);

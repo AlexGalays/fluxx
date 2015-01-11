@@ -8,44 +8,62 @@ var dispatcher = require('./dispatcher');
 /**
 * Creates and register a new store.
 */
-function Store(instance) {
-  dispatcher.register(instance);
-
-  var actions = instance.actions;
+function Store(factory) {
   var handlers = {};
-  for (var i = 0; i < actions.length - 1; i += 2) {
-    handlers[actions[i]] = actions[i+1];
+
+  function on(action, handler) {
+    handlers[action] = handler;
   }
 
-  instance._handleAction = function(actionName, payload, waitFor) {
-    handlers[actionName] && handlers[actionName](payload, waitFor);
+  var instance = factory(on, dispatcher.waitFor);
+  dispatcher.register(instance);
+
+  instance._handleAction = function(actionName, payload) {
+    if (!handlers[actionName]) return;
+    handlers[actionName](payload);
+    instance.changed.dispatch();
   };
+
+  instance.unregister = function() {
+    dispatcher.unregister(instance);
+  };
+
+  instance.changed = new Signal();
 
   return instance;
 }
 
 /**
-* Returns a signal that will be sent if any of the passed
-* signals are sent during one dispatcher run.
+* Calls a function if any of the passed
+* stores changed during one dispatcher run.
 */
-Store.when = function() {
-  var signals = arguments;
-  var count = 0;
-  var startCount;
-  var result = new Signal();
+Store.onChange = function() {
+  var stores = arguments;
 
-  function inc() { count += 1 }
-  function started() { startCount = count }
-  function stopped() { if (startCount != count) result.dispatch() }
+  // curried, to separate the stores from the callback.
+  return function(callback) {
+    var count = 0;
 
-  for (var i = 0; i < signals.length; i++) {
-    signals[i].add(inc);
-  }
+    function inc() { count += 1 }
+    function started() { count = 0 }
+    function stopped() { if (count) callback() }
 
-  dispatcher.started.add(started);
-  dispatcher.stopped.add(stopped);
+    for (var i = 0; i < stores.length; i++) {
+      stores[i].changed.add(inc);
+    }
 
-  return result;
+    dispatcher.started.add(started);
+    dispatcher.stopped.add(stopped);
+
+    return function unsub() {
+      dispatcher.started.remove(started);
+      dispatcher.stopped.remove(stopped);
+
+      for (var i = 0; i < stores.length; i++) {
+        stores[i].changed.remove(inc);
+      }
+    }
+  };
 }
 
 

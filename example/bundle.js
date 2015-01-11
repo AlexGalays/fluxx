@@ -18455,6 +18455,192 @@ module.exports = warning;
 module.exports = require('./lib/React');
 
 },{"./lib/React":27}],145:[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React       = require('react');
+var MagicButton = require('./MagicButton');
+
+
+var App = React.createClass({displayName: 'App',
+
+  render: function() {
+    return (
+      React.DOM.div(null, 
+        MagicButton(null), 
+
+        React.DOM.div({className: "blue"}, 
+          this.props.blueNumber
+        ), 
+
+        React.DOM.div({className: "green"}, 
+          this.props.greenNumber, " (Change faster)"
+        ), 
+
+        React.DOM.div({className: "red"}, 
+          this.props.redNumber, " (Only increment)"
+        )
+      )
+    );
+  }
+
+});
+
+
+module.exports = App;
+},{"./MagicButton":146,"react":144}],146:[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React   = require('react');
+var actions = require('./actions');
+
+
+var MagicButton = React.createClass({displayName: 'MagicButton',
+
+  getDefaultProps: function() {
+    return {offset: 4};
+  },
+
+  render: function() {
+    return (
+      React.DOM.div(null, 
+        React.DOM.button({onClick: this.increment}, "+"), 
+        React.DOM.button({onClick: this.decrement}, "-")
+      )
+    );
+  },
+
+  increment: function() {
+    actions.increment(this.props.offset);
+  },
+
+  decrement: function() {
+    actions.decrement(this.props.offset);
+  }
+
+});
+
+
+module.exports = MagicButton;
+},{"./actions":147,"react":144}],147:[function(require,module,exports){
+
+var Action = require('../../src/Action');
+
+
+exports.increment = Action('increment');
+exports.decrement = Action('decrement');
+exports.init      = Action('init');
+},{"../../src/Action":153}],148:[function(require,module,exports){
+var Store     = require('../../src/Store');
+var actions   = require('./actions');
+
+var init      = actions.init;
+var decrement = actions.decrement;
+var increment = actions.increment;
+
+
+module.exports = Store(function(on, waitFor) {
+
+  var value = 0;
+
+  on(init, function(val) {
+    value = val;
+  });
+
+  on(decrement, function(offset) {
+    value -= offset;
+  });
+
+  on(increment, function(offset) {
+    value += offset;
+  });
+
+  return {
+    value: function() { return value }
+  };
+});
+},{"../../src/Store":154,"./actions":147}],149:[function(require,module,exports){
+var Store      = require('../../src/Store');
+var actions    = require('./actions');
+var blueNumber = require('./blueNumber');
+
+var init       = actions.init;
+var decrement  = actions.decrement;
+var increment  = actions.increment;
+
+
+module.exports = Store(function(on, waitFor) {
+
+  var currentOffset = 0;
+
+  on(init, function() {
+    // noop; green depends on blue; so whenever blue changes, green does too.
+  });
+
+  on(decrement, function(offset) {
+    currentOffset -= (10 * offset);
+  });
+
+  on(increment, function(offset) {
+    currentOffset += (10 * offset);
+  });
+
+  return {
+    value: function() { return blueNumber.value() + currentOffset }
+  };
+});
+},{"../../src/Store":154,"./actions":147,"./blueNumber":148}],150:[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React       = require('react');
+var blueNumber  = require('./blueNumber');
+var greenNumber = require('./greenNumber');
+var redNumber   = require('./redNumber');
+var App         = require('./App');
+var init        = require('./actions').init;
+var onChange    = require('../../src/Store').onChange;
+
+
+function render() {
+  console.log('render');
+
+  return React.renderComponent(
+    App({
+      blueNumber: blueNumber.value(), 
+      greenNumber: greenNumber.value(), 
+      redNumber: redNumber.value()}),
+
+    document.querySelector('body')
+  );
+}
+
+onChange(blueNumber, greenNumber, redNumber)(render);
+
+init(10);
+},{"../../src/Store":154,"./App":145,"./actions":147,"./blueNumber":148,"./greenNumber":149,"./redNumber":151,"react":144}],151:[function(require,module,exports){
+var Store      = require('../../src/Store');
+var increment  = require('./actions').increment;
+var init       = require('./actions').init;
+var blueNumber = require('./blueNumber');
+
+
+module.exports = Store(function(on, waitFor) {
+
+  var value = 0;
+
+  on(init, function(val) {
+    value = val;
+  });
+
+  on(increment, function(offset) {
+    waitFor(blueNumber);
+    value = blueNumber.value();
+  });
+
+  return {
+    value: function() { return value }
+  };
+});
+},{"../../src/Store":154,"./actions":147,"./blueNumber":148}],152:[function(require,module,exports){
 /*jslint onevar:true, undef:true, newcap:true, regexp:true, bitwise:true, maxerr:50, indent:4, white:false, nomen:false, plusplus:false */
 /*global define:false, require:false, exports:false, module:false, signals:false */
 
@@ -18901,217 +19087,7 @@ module.exports = require('./lib/React');
 
 }(this));
 
-},{}],146:[function(require,module,exports){
-/** @jsx React.DOM */
-
-var React       = require('react');
-var MagicButton = require('./MagicButton');
-
-
-var App = React.createClass({displayName: 'App',
-
-  render: function() {
-    return (
-      React.DOM.div(null, 
-        MagicButton(null), 
-
-        React.DOM.div({className: "blue"}, 
-          this.props.blueNumber
-        ), 
-
-        React.DOM.div({className: "green"}, 
-          this.props.greenNumber, " (Change faster)"
-        ), 
-
-        React.DOM.div({className: "red"}, 
-          this.props.redNumber, " (Only increment)"
-        )
-      )
-    );
-  }
-
-});
-
-
-module.exports = App;
-},{"./MagicButton":147,"react":144}],147:[function(require,module,exports){
-/** @jsx React.DOM */
-
-var React   = require('react');
-var actions = require('./actions');
-
-
-var MagicButton = React.createClass({displayName: 'MagicButton',
-
-  getDefaultProps: function() {
-    return {offset: 4};
-  },
-
-  render: function() {
-    return (
-      React.DOM.div(null, 
-        React.DOM.button({onClick: this.increment}, "+"), 
-        React.DOM.button({onClick: this.decrement}, "-")
-      )
-    );
-  },
-
-  increment: function() {
-    actions.increment(this.props.offset);
-  },
-
-  decrement: function() {
-    actions.decrement(this.props.offset);
-  }
-
-});
-
-
-module.exports = MagicButton;
-},{"./actions":148,"react":144}],148:[function(require,module,exports){
-
-var Action = require('../../src/Action');
-
-
-exports.increment = Action('increment');
-exports.decrement = Action('decrement');
-exports.init      = Action('init');
-},{"../../src/Action":154}],149:[function(require,module,exports){
-var Signal    = require('signals').Signal;
-var Store     = require('../../src/Store');
-var actions   = require('./actions');
-
-var init      = actions.init;
-var decrement = actions.decrement;
-var increment = actions.increment;
-
-
-var value = 0;
-var changed = new Signal();
-
-
-module.exports = Store({
-  changed: changed,
-  value: function() { return value },
-
-  actions: [
-    init, function(val) {
-      value = val;
-      changed.dispatch();
-    },
-
-    decrement, function(offset) {
-      value -= offset;
-      changed.dispatch();
-    },
-
-    increment, function(offset) {
-      value += offset;
-      changed.dispatch();
-    }
-  ]
-});
-},{"../../src/Store":155,"./actions":148,"signals":145}],150:[function(require,module,exports){
-var Signal     = require('signals').Signal;
-var Store      = require('../../src/Store');
-var actions    = require('./actions');
-var blueNumber = require('./blueNumber');
-
-var init       = actions.init;
-var decrement  = actions.decrement;
-var increment  = actions.increment;
-
-
-var currentOffset = 0;
-var changed = new Signal();
-
-
-module.exports = Store({
-  changed: changed,
-  value: function() { return blueNumber.value() + currentOffset },
-
-  actions: [
-    init, function() {
-      changed.dispatch();
-    },
-
-    decrement, function(offset) {
-      currentOffset -= (10 * offset);
-      changed.dispatch();
-    },
-
-    increment, function(offset) {
-      currentOffset += (10 * offset);
-      changed.dispatch();
-    },
-  ]
-});
-},{"../../src/Store":155,"./actions":148,"./blueNumber":149,"signals":145}],151:[function(require,module,exports){
-/** @jsx React.DOM */
-
-var React       = require('react');
-var blueNumber  = require('./blueNumber');
-var greenNumber = require('./greenNumber');
-var redNumber   = require('./redNumber');
-var App         = require('./App');
-var init        = require('./actions').init;
-var Store       = require('../../src/Store');
-
-
-function render() {
-  console.log('render');
-
-  return React.renderComponent(
-    App({
-      blueNumber: blueNumber.value(), 
-      greenNumber: greenNumber.value(), 
-      redNumber: redNumber.value()}),
-
-    document.querySelector('body')
-  );
-}
-
-Store.when(
-  blueNumber.changed,
-  greenNumber.changed,
-  redNumber.changed
-)
-.add(render);
-
-init(10);
-},{"../../src/Store":155,"./App":146,"./actions":148,"./blueNumber":149,"./greenNumber":150,"./redNumber":152,"react":144}],152:[function(require,module,exports){
-var Signal     = require('signals').Signal;
-var Store      = require('../../src/Store');
-var increment  = require('./actions').increment;
-var init       = require('./actions').init;
-var blueNumber = require('./blueNumber');
-
-
-var value = 0;
-var changed = new Signal();
-
-
-module.exports = Store({
-  changed: changed,
-  value: function() { return value },
-
-  actions: [
-    init, function(val) {
-      value = val;
-      changed.dispatch();
-    },
-
-    increment, function(offset, waitFor) {
-      waitFor(blueNumber);
-
-      value = blueNumber.value();
-      changed.dispatch();
-    },
-  ]
-});
-},{"../../src/Store":155,"./actions":148,"./blueNumber":149,"signals":145}],153:[function(require,module,exports){
-module.exports=require(145)
-},{}],154:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 'use strict';
 
 var invariant  = require('./invariant');
@@ -19130,8 +19106,7 @@ var names = {};
 */
 function Action(name) {
 
-  ("production" !== "development" ? invariant(
-    !names[name],
+  ("production" !== "development" ? invariant(!names[name],
     'An action with the name %s already exists',
     name
   ) : invariant(!names[name]));
@@ -19147,7 +19122,7 @@ function Action(name) {
 
 
 module.exports = Action;
-},{"./dispatcher":156,"./invariant":157}],155:[function(require,module,exports){
+},{"./dispatcher":155,"./invariant":156}],154:[function(require,module,exports){
 'use strict';
 
 
@@ -19158,49 +19133,67 @@ var dispatcher = require('./dispatcher');
 /**
 * Creates and register a new store.
 */
-function Store(instance) {
-  dispatcher.register(instance);
-
-  var actions = instance.actions;
+function Store(factory) {
   var handlers = {};
-  for (var i = 0; i < actions.length - 1; i += 2) {
-    handlers[actions[i]] = actions[i+1];
+
+  function on(action, handler) {
+    handlers[action] = handler;
   }
 
-  instance._handleAction = function(actionName, payload, waitFor) {
-    handlers[actionName] && handlers[actionName](payload, waitFor);
+  var instance = factory(on, dispatcher.waitFor);
+  dispatcher.register(instance);
+
+  instance._handleAction = function(actionName, payload) {
+    if (!handlers[actionName]) return;
+    handlers[actionName](payload);
+    instance.changed.dispatch();
   };
+
+  instance.unregister = function() {
+    dispatcher.unregister(instance);
+  };
+
+  instance.changed = new Signal();
 
   return instance;
 }
 
 /**
-* Returns a signal that will be sent if any of the passed
-* signals are sent during one dispatcher run.
+* Calls a function if any of the passed
+* stores changed during one dispatcher run.
 */
-Store.when = function() {
-  var signals = arguments;
-  var count = 0;
-  var startCount;
-  var result = new Signal();
+Store.onChange = function() {
+  var stores = arguments;
 
-  function inc() { count += 1 }
-  function started() { startCount = count }
-  function stopped() { if (startCount != count) result.dispatch() }
+  // curried, to separate the stores from the callback.
+  return function(callback) {
+    var count = 0;
 
-  for (var i = 0; i < signals.length; i++) {
-    signals[i].add(inc);
-  }
+    function inc() { count += 1 }
+    function started() { count = 0 }
+    function stopped() { if (count) callback() }
 
-  dispatcher.started.add(started);
-  dispatcher.stopped.add(stopped);
+    for (var i = 0; i < stores.length; i++) {
+      stores[i].changed.add(inc);
+    }
 
-  return result;
+    dispatcher.started.add(started);
+    dispatcher.stopped.add(stopped);
+
+    return function unsub() {
+      dispatcher.started.remove(started);
+      dispatcher.stopped.remove(stopped);
+
+      for (var i = 0; i < stores.length; i++) {
+        stores[i].changed.remove(inc);
+      }
+    }
+  };
 }
 
 
 module.exports = Store;
-},{"./dispatcher":156,"signals":153}],156:[function(require,module,exports){
+},{"./dispatcher":155,"signals":152}],155:[function(require,module,exports){
 'use strict';
 
 var Signal    = require('signals').Signal;
@@ -19233,11 +19226,19 @@ var dispatcher = (function() {
     storeId++;
   }
 
+  function unregister(store) {
+    ("production" !== "development" ? invariant(stores[store._id],
+      'Dispatcher.unregister(...): `%s` does not map to a registered store.',
+      store
+    ) : invariant(stores[store._id]));
+
+    delete stores[store._id];
+  }
+
   function waitFor() {
     var storeDeps = arguments;
 
-    ("production" !== "development" ? invariant(
-      dispatching,
+    ("production" !== "development" ? invariant(dispatching,
       'dispatcher.waitFor(...): Must be invoked while dispatching.'
     ) : invariant(dispatching));
 
@@ -19246,8 +19247,7 @@ var dispatcher = (function() {
       var id = store._id;
 
       if (isPending[id]) {
-        ("production" !== "development" ? invariant(
-          isHandled[id],
+        ("production" !== "development" ? invariant(isHandled[id],
           'dispatcher.waitFor(...): Circular dependency detected while ' +
           'waiting for `%s`.',
           id
@@ -19255,8 +19255,7 @@ var dispatcher = (function() {
         continue;
       }
 
-      ("production" !== "development" ? invariant(
-        stores[id],
+      ("production" !== "development" ? invariant(stores[id],
         'dispatcher.waitFor(...): `%s` does not map to a registered store.',
         id
       ) : invariant(stores[id]));
@@ -19266,8 +19265,7 @@ var dispatcher = (function() {
   }
 
   function dispatch(actionName, payload) {
-    ("production" !== "development" ? invariant(
-      !dispatching,
+    ("production" !== "development" ? invariant(!dispatching,
       'dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch.'
     ) : invariant(!dispatching));
 
@@ -19307,12 +19305,13 @@ var dispatcher = (function() {
 
   function notifyStore(id) {
     isPending[id] = true;
-    stores[id]._handleAction(currentAction, currentPayload, waitFor);
+    stores[id]._handleAction(currentAction, currentPayload);
     isHandled[id] = true;
   }
 
   return {
     register: register,
+    unregister: unregister,
     waitFor: waitFor,
     dispatch: dispatch,
     started: started,
@@ -19323,7 +19322,7 @@ var dispatcher = (function() {
 
 
 module.exports = dispatcher;
-},{"./invariant":157,"signals":153}],157:[function(require,module,exports){
+},{"./invariant":156,"signals":152}],156:[function(require,module,exports){
 'use strict';
 
 /**
@@ -19362,4 +19361,4 @@ var invariant = function(condition, format, a, b, c, d, e, f) {
 
 
 module.exports = invariant;
-},{}]},{},[151])
+},{}]},{},[150])

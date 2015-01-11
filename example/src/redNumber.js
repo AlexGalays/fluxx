@@ -1,29 +1,23 @@
-var Signal     = require('signals').Signal;
 var Store      = require('../../src/Store');
 var increment  = require('./actions').increment;
 var init       = require('./actions').init;
 var blueNumber = require('./blueNumber');
 
 
-var value = 0;
-var changed = new Signal();
+module.exports = Store(function(on, waitFor) {
 
+  var value = 0;
 
-module.exports = Store({
-  changed: changed,
-  value: function() { return value },
+  on(init, function(val) {
+    value = val;
+  });
 
-  actions: [
-    init, function(val) {
-      value = val;
-      changed.dispatch();
-    },
+  on(increment, function(offset) {
+    waitFor(blueNumber);
+    value = blueNumber.value();
+  });
 
-    increment, function(offset, waitFor) {
-      waitFor(blueNumber);
-
-      value = blueNumber.value();
-      changed.dispatch();
-    },
-  ]
+  return {
+    value: function() { return value }
+  };
 });

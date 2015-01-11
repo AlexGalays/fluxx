@@ -30,11 +30,19 @@ var dispatcher = (function() {
     storeId++;
   }
 
+  function unregister(store) {
+    invariant(stores[store._id],
+      'Dispatcher.unregister(...): `%s` does not map to a registered store.',
+      store
+    );
+
+    delete stores[store._id];
+  }
+
   function waitFor() {
     var storeDeps = arguments;
 
-    invariant(
-      dispatching,
+    invariant(dispatching,
       'dispatcher.waitFor(...): Must be invoked while dispatching.'
     );
 
@@ -43,8 +51,7 @@ var dispatcher = (function() {
       var id = store._id;
 
       if (isPending[id]) {
-        invariant(
-          isHandled[id],
+        invariant(isHandled[id],
           'dispatcher.waitFor(...): Circular dependency detected while ' +
           'waiting for `%s`.',
           id
@@ -52,8 +59,7 @@ var dispatcher = (function() {
         continue;
       }
 
-      invariant(
-        stores[id],
+      invariant(stores[id],
         'dispatcher.waitFor(...): `%s` does not map to a registered store.',
         id
       );
@@ -63,8 +69,7 @@ var dispatcher = (function() {
   }
 
   function dispatch(actionName, payload) {
-    invariant(
-      !dispatching,
+    invariant(!dispatching,
       'dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch.'
     );
 
@@ -104,12 +109,13 @@ var dispatcher = (function() {
 
   function notifyStore(id) {
     isPending[id] = true;
-    stores[id]._handleAction(currentAction, currentPayload, waitFor);
+    stores[id]._handleAction(currentAction, currentPayload);
     isHandled[id] = true;
   }
 
   return {
     register: register,
+    unregister: unregister,
     waitFor: waitFor,
     dispatch: dispatch,
     started: started,

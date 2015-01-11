@@ -1,8 +1,9 @@
 {
   "name": "fluxx",
-  "version": "0.0.1",
-  "description": "Facebook flux modules",
-  "keywords": ["flux", "facebook", "dispatcher", "store", "action"],
+  "version": "0.1.0",
+  "main": "src/fluxx",
+  "description": "Facebook flux-like Store, Action",
+  "keywords": ["flux", "facebook", "dispatcher", "store", "action", "reactive", "unidirectional"],
   "homepage": "https://github.com/AlexGalays/fluxx/",
 
   "author": {

@@ -1,4 +1,3 @@
-var Signal     = require('signals').Signal;
 var Store      = require('../../src/Store');
 var actions    = require('./actions');
 var blueNumber = require('./blueNumber');
@@ -8,27 +7,23 @@ var decrement  = actions.decrement;
 var increment  = actions.increment;
 
 
-var currentOffset = 0;
-var changed = new Signal();
+module.exports = Store(function(on, waitFor) {
 
+  var currentOffset = 0;
 
-module.exports = Store({
-  changed: changed,
-  value: function() { return blueNumber.value() + currentOffset },
+  on(init, function() {
+    // noop; green depends on blue; so whenever blue changes, green does too.
+  });
 
-  actions: [
-    init, function() {
-      changed.dispatch();
-    },
+  on(decrement, function(offset) {
+    currentOffset -= (10 * offset);
+  });
 
-    decrement, function(offset) {
-      currentOffset -= (10 * offset);
-      changed.dispatch();
-    },
+  on(increment, function(offset) {
+    currentOffset += (10 * offset);
+  });
 
-    increment, function(offset) {
-      currentOffset += (10 * offset);
-      changed.dispatch();
-    },
-  ]
+  return {
+    value: function() { return blueNumber.value() + currentOffset }
+  };
 });
