@@ -19,9 +19,11 @@ function Store(factory) {
   dispatcher.register(instance);
 
   instance._handleAction = function(actionName, payload) {
-    if (!handlers[actionName]) return;
-    handlers[actionName](payload);
-    instance.changed.dispatch();
+    if (actionName in handlers) {
+      var handler = handlers[actionName];
+      if (handler) handler(payload);
+      instance.changed.dispatch();
+    }
   };
 
   instance.unregister = function() {

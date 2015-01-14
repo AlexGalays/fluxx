@@ -13,8 +13,18 @@ var names = {};
 * Ex: 
 * var ClickThread = Action('clickThread'); // Create the action once
 * ClickThread(id); // Dispatch a payload any number of times
+*
+* // or create a bunch of actions:
+* var actions = Action('clickThread', 'scroll');
 */
 function Action(name) {
+  // Batch creation notation
+  if (arguments.length > 1) {
+    return [].slice.call(arguments).reduce(function(obj, name) {
+      obj[name] = Action(name);
+      return obj;
+    }, {});
+  }
 
   invariant(!names[name],
     'An action with the name %s already exists',

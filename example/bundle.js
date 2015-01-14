@@ -18526,9 +18526,7 @@ module.exports = MagicButton;
 var Action = require('../../src/Action');
 
 
-exports.increment = Action('increment');
-exports.decrement = Action('decrement');
-exports.init      = Action('init');
+module.exports = Action('init', 'increment', 'decrement');
 },{"../../src/Action":153}],148:[function(require,module,exports){
 var Store     = require('../../src/Store');
 var actions   = require('./actions');
@@ -18572,9 +18570,7 @@ module.exports = Store(function(on, waitFor) {
 
   var currentOffset = 0;
 
-  on(init, function() {
-    // noop; green depends on blue; so whenever blue changes, green does too.
-  });
+  on(init);
 
   on(decrement, function(offset) {
     currentOffset -= (10 * offset);
@@ -19103,8 +19099,18 @@ var names = {};
 * Ex: 
 * var ClickThread = Action('clickThread'); // Create the action once
 * ClickThread(id); // Dispatch a payload any number of times
+*
+* // or create a bunch of actions:
+* var actions = Action('clickThread', 'scroll');
 */
 function Action(name) {
+  // Batch creation notation
+  if (arguments.length > 1) {
+    return [].slice.call(arguments).reduce(function(obj, name) {
+      obj[name] = Action(name);
+      return obj;
+    }, {});
+  }
 
   ("production" !== "development" ? invariant(!names[name],
     'An action with the name %s already exists',
@@ -19144,9 +19150,11 @@ function Store(factory) {
   dispatcher.register(instance);
 
   instance._handleAction = function(actionName, payload) {
-    if (!handlers[actionName]) return;
-    handlers[actionName](payload);
-    instance.changed.dispatch();
+    if (actionName in handlers) {
+      var handler = handlers[actionName];
+      if (handler) handler(payload);
+      instance.changed.dispatch();
+    }
   };
 
   instance.unregister = function() {

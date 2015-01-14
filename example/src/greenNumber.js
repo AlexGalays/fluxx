@@ -11,9 +11,7 @@ module.exports = Store(function(on, waitFor) {
 
   var currentOffset = 0;
 
-  on(init, function() {
-    // noop; green depends on blue; so whenever blue changes, green does too.
-  });
+  on(init);
 
   on(decrement, function(offset) {
     currentOffset -= (10 * offset);
