@@ -2,4 +2,4 @@
 var Action = require('../../src/Action');
 
 
-module.exports = Action('init', 'increment', 'decrement');
+module.exports = Action.create('init', 'increment', 'decrement');

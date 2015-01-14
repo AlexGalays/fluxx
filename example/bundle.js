@@ -18526,7 +18526,7 @@ module.exports = MagicButton;
 var Action = require('../../src/Action');
 
 
-module.exports = Action('init', 'increment', 'decrement');
+module.exports = Action.create('init', 'increment', 'decrement');
 },{"../../src/Action":153}],148:[function(require,module,exports){
 var Store     = require('../../src/Store');
 var actions   = require('./actions');
@@ -19100,22 +19100,14 @@ var names = {};
 * var ClickThread = Action('clickThread'); // Create the action once
 * ClickThread(id); // Dispatch a payload any number of times
 *
-* // or create a bunch of actions:
-* var actions = Action('clickThread', 'scroll');
 */
 function Action(name) {
-  // Batch creation notation
-  if (arguments.length > 1) {
-    return [].slice.call(arguments).reduce(function(obj, name) {
-      obj[name] = Action(name);
-      return obj;
-    }, {});
-  }
-
   ("production" !== "development" ? invariant(!names[name],
-    'An action with the name %s already exists',
+    'An action with the name %s was already created',
     name
   ) : invariant(!names[name]));
+
+  names[name] = name;
 
   function dispatch(payload) {
     dispatcher.dispatch(name, payload);
@@ -19125,6 +19117,17 @@ function Action(name) {
 
   return dispatch;
 }
+
+/**
+* Creates one or more actions, exposed by name in an object (useful to assign to module.exports)
+* var actions = Action.create('clickThread', 'scroll');
+*/
+Action.create = function() {
+  return [].slice.call(arguments).reduce(function(obj, name) {
+    obj[name] = Action(name);
+    return obj;
+  }, {});
+};
 
 
 module.exports = Action;
