@@ -1,7 +1,7 @@
 
 # Fluxx
 
-A straight to the point and efficient implementation of the [Facebook flux guidelines](http://facebook.github.io/react/docs/flux-overview.html).
+A straight to the point and efficient implementation of the [Facebook flux guidelines](http://facebook.github.io/flux/docs/overview.html).
 
 The key elements are kept
 - A central dispatcher enforcing the sequential/unidirectional flow
