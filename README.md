@@ -7,6 +7,10 @@ The key elements are kept
 - A central dispatcher enforcing the sequential/unidirectional flow
 - Stores can depend on other stores
 
+but there is far less boilerplate.
+
+
+## Simple example
 
 ```javascript
 var Store = require('fluxx').Store;
@@ -54,6 +58,46 @@ onChange(valueStore, anotherStore)(render);
 
 ```
 
+## Example showing dependOn and preventing change dispatch
+
+```javascript
+var valueStore = require('./valueStore');
+
+var derivedValueStore = Store(function(on, dependOn) {
+
+  // This derived store depends on valueStore, meaning we let valueStore update itself first.
+  dependOn(valueStore);
+
+  var value;
+
+  on(init, function() {
+    value = derivedValue();
+  });
+
+  // Not interested in the decrement action
+
+  on(increment, function() {
+    var newValue = derivedValue();
+
+    // Only increment our value if the primary store's value is under 100.
+    if (newValue < 100) value = newValue;
+    // As an optimization, we can return false to tell the dispatcher this store's state didn't actually change.
+    else return false;
+  });
+
+  function derivedValue() {
+    return valueStore.value() * 2;
+  }
+
+  // The store public API
+  return {
+    value: function() { return value }
+  };
+
+});
+
+```
+
 
 ## Differences with the Facebook examples
 
@@ -68,12 +112,12 @@ onChange(valueStore, anotherStore)(render);
 ```javascript
 dispatcher.waitFor([store1.dispatchToken, token2.dispatchToken])
 // Becomes
-waitFor(store1, store2)
+dependOn(store1, store2)
 ```
 
 - Use closure-style modules instead of clumsy pseudo/es6 classes
 
-- Performance: `Store.onChange(store1, store2)` can be used to render a view only once when either store1 or store2 was updated during one dispatcher run. The Facebook examples call `render()` twice if two stores were updated, which is very wasteful.
+- Performance: `Store.onChange(store1, store2)` can be used to render a view only once when either store1 or store2 was updated during one dispatcher run. The Facebook examples call `render()` twice if two stores were updated, which is wasteful.
 
 ## Full example
 

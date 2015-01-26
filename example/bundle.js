@@ -18619,7 +18619,7 @@ var init       = require('./actions').init;
 var blueNumber = require('./blueNumber');
 
 
-module.exports = Store(function(on, waitFor) {
+module.exports = Store(function(on, dependOn) { dependOn(blueNumber);
 
   var value = 0;
 
@@ -18628,7 +18628,6 @@ module.exports = Store(function(on, waitFor) {
   });
 
   on(increment, function(offset) {
-    waitFor(blueNumber);
     value = blueNumber.value();
   });
 
@@ -19143,20 +19142,38 @@ var dispatcher = require('./dispatcher');
 * Creates and register a new store.
 */
 function Store(factory) {
-  var handlers = {};
+  var handlers = {},
+      dependencies = [],
+      waitFor;
 
   function on(action, handler) {
     handlers[action] = handler;
   }
 
-  var instance = factory(on, dispatcher.waitFor);
+  function dependOn() {
+    dependencies = Array.prototype.slice.call(arguments);
+  }
+
+  var instance = factory(on, dependOn);
+
   dispatcher.register(instance);
 
   instance._handleAction = function(actionName, payload) {
+    var handler, result;
+
+    // If this store subscribed to that action
     if (actionName in handlers) {
-      var handler = handlers[actionName];
-      if (handler) handler(payload);
-      instance.changed.dispatch();
+      handler = handlers[actionName];
+
+      // handlers are optional
+      if (handler) {
+        dispatcher.waitFor.apply(null, dependencies);
+
+        result = handler(payload);
+      }
+
+      if (result !== false)
+        instance.changed.dispatch();
     }
   };
 

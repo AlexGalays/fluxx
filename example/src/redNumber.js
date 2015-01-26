@@ -4,7 +4,7 @@ var init       = require('./actions').init;
 var blueNumber = require('./blueNumber');
 
 
-module.exports = Store(function(on, waitFor) {
+module.exports = Store(function(on, dependOn) { dependOn(blueNumber);
 
   var value = 0;
 
@@ -13,7 +13,6 @@ module.exports = Store(function(on, waitFor) {
   });
 
   on(increment, function(offset) {
-    waitFor(blueNumber);
     value = blueNumber.value();
   });
 
