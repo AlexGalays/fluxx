@@ -21,7 +21,7 @@ function Store(factory) {
     dependencies = Array.prototype.slice.call(arguments);
   }
 
-  var instance = factory(on, dependOn);
+  var instance = factory(on, dependOn) || {};
 
   dispatcher.register(instance);
 
