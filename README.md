@@ -119,6 +119,16 @@ dependOn(store1, store2)
 
 - Performance: `Store.onChange(store1, store2)` can be used to render a view only once when either store1 or store2 was updated during one dispatcher run. The Facebook examples call `render()` twice if two stores were updated, which is wasteful.
 
+## Enabling logging
+
+This will log all action dispatching along with the list of stores that handled the action.
+
+```javascript
+var fluxx = require('fluxx');
+
+fluxx.enableLogs();
+```
+
 ## Full example
 
 [Here](example/src)

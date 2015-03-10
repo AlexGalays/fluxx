@@ -73,6 +73,11 @@ var dispatcher = (function() {
       'dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch.'
     );
 
+    if (dispatcher.log) {
+      console.log('%c' + actionName, 'color: #F51DE3', 'dispatched with payload ', payload);
+      console.log('  handled by stores: ');
+    }
+
     currentAction = actionName;
     currentPayload = payload;
 
@@ -109,11 +114,19 @@ var dispatcher = (function() {
 
   function notifyStore(id) {
     isPending[id] = true;
-    stores[id]._handleAction(currentAction, currentPayload);
+
+    var store = stores[id];
+    var result = store._handleAction(currentAction, currentPayload);
+
+    if (dispatcher.log && result !== undefined) {
+      var updateMsg = (result === false) ? '(did not update its UI state)' : '';
+      console.log('    %c' + store._name, 'color: blue', updateMsg);
+    }
+
     isHandled[id] = true;
   }
 
-  return {
+  var dispatcher = {
     register: register,
     unregister: unregister,
     waitFor: waitFor,
@@ -122,6 +135,7 @@ var dispatcher = (function() {
     stopped: stopped
   };
 
+  return dispatcher;
 })();
 
 

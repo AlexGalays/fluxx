@@ -22,6 +22,7 @@ function Store(factory) {
   }
 
   var instance = factory(on, dependOn) || {};
+  instance._name = factory.name;
 
   dispatcher.register(instance);
 
@@ -39,8 +40,11 @@ function Store(factory) {
         result = handler(payload);
       }
 
-      if (result !== false)
+      if (result !== false) {
         instance.changed.dispatch();
+        return true;
+      }
+      else return false;
     }
   };
 
