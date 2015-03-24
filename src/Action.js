@@ -1,10 +1,9 @@
 'use strict';
 
-var invariant  = require('./invariant');
 var dispatcher = require('./dispatcher');
 
 
-var names = {};
+var id = 1;
 
 /**
 * Creates an unique action for a name.
@@ -13,23 +12,17 @@ var names = {};
 * Ex: 
 * var ClickThread = Action('clickThread'); // Create the action once
 * ClickThread(id); // Dispatch a payload any number of times
-*
 */
 function Action(name) {
-  invariant(!names[name],
-    'An action with the name %s was already created',
-    name
-  );
 
-  names[name] = name;
-
-  function dispatch(payload) {
-    dispatcher.dispatch(name, payload);
+  function action(payload) {
+    dispatcher.dispatch(action, payload);
   }
 
-  dispatch.toString = function() { return name };
+  action.toString = function() { return name };
+  action.id = id++;
 
-  return dispatch;
+  return action;
 }
 
 /**

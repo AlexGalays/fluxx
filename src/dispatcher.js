@@ -1,8 +1,6 @@
 'use strict';
 
 var Signal    = require('signals').Signal;
-var invariant = require('./invariant');
-
 
 /**
 * Singleton dispatcher used to broadcast payloads to stores.
@@ -31,10 +29,8 @@ var dispatcher = (function() {
   }
 
   function unregister(store) {
-    invariant(stores[store._id],
-      'Dispatcher.unregister(...): `%s` does not map to a registered store.',
-      store
-    );
+    if (!stores[store._id]) throw new Error(
+      'Dispatcher.unregister(...): `' + store._name + '` is not to a registered store.');
 
     delete stores[store._id];
   }
@@ -42,43 +38,37 @@ var dispatcher = (function() {
   function waitFor() {
     var storeDeps = arguments;
 
-    invariant(dispatching,
-      'dispatcher.waitFor(...): Must be invoked while dispatching.'
-    );
+    if (!dispatching) throw new Error(
+      'dispatcher.waitFor(...): Must be invoked while dispatching.');
 
     for (var i = 0; i < storeDeps.length; i++) {
       var store = storeDeps[i];
       var id = store._id;
 
       if (isPending[id]) {
-        invariant(isHandled[id],
-          'dispatcher.waitFor(...): Circular dependency detected while ' +
-          'waiting for `%s`.',
-          id
-        );
+        if (!isHandled[id]) throw new Error(
+          'dispatcher.waitFor(...): Circular dependency detected while waiting for ' + id);
+
         continue;
       }
 
-      invariant(stores[id],
-        'dispatcher.waitFor(...): `%s` does not map to a registered store.',
-        id
-      );
+      if (!stores[id]) throw new Error(
+        'dispatcher.waitFor(...): ' + id + ' does not map to a registered store.');
 
       notifyStore(id);
     }
   }
 
-  function dispatch(actionName, payload) {
-    invariant(!dispatching,
-      'dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch.'
-    );
+  function dispatch(action, payload) {
+    if (dispatching) throw new Error(
+      'dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch.');
 
     if (dispatcher.log) {
-      console.log('%c' + actionName, 'color: #F51DE3', 'dispatched with payload ', payload);
+      console.log('%c' + action, 'color: #F51DE3', 'dispatched with payload ', payload);
       console.log('  handled by stores: ');
     }
 
-    currentAction = actionName;
+    currentAction = action;
     currentPayload = payload;
 
     startDispatching();

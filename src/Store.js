@@ -14,7 +14,7 @@ function Store(factory) {
       waitFor;
 
   function on(action, handler) {
-    handlers[action] = handler;
+    handlers[action.id] = handler;
   }
 
   function dependOn() {
@@ -26,12 +26,12 @@ function Store(factory) {
 
   dispatcher.register(instance);
 
-  instance._handleAction = function(actionName, payload) {
+  instance._handleAction = function(action, payload) {
     var handler, result;
 
     // If this store subscribed to that action
-    if (actionName in handlers) {
-      handler = handlers[actionName];
+    if (action.id in handlers) {
+      handler = handlers[action.id];
 
       // handlers are optional
       if (handler) {
@@ -88,7 +88,7 @@ Store.onChange = function() {
       }
     }
   };
-}
+};
 
 
 module.exports = Store;
