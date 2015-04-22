@@ -20,6 +20,6 @@
   },
 
   "browserify": {
-    "transform": ["reactify", "./lib/prodOptims", "envify"]
+    "transform": ["reactify"]
   }
 }

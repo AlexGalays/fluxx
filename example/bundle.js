@@ -19085,11 +19085,10 @@ module.exports = Store(function(on, dependOn) { dependOn(blueNumber);
 },{}],153:[function(require,module,exports){
 'use strict';
 
-var invariant  = require('./invariant');
 var dispatcher = require('./dispatcher');
 
 
-var names = {};
+var id = 1;
 
 /**
 * Creates an unique action for a name.
@@ -19098,23 +19097,17 @@ var names = {};
 * Ex: 
 * var ClickThread = Action('clickThread'); // Create the action once
 * ClickThread(id); // Dispatch a payload any number of times
-*
 */
 function Action(name) {
-  ("production" !== "development" ? invariant(!names[name],
-    'An action with the name %s was already created',
-    name
-  ) : invariant(!names[name]));
 
-  names[name] = name;
-
-  function dispatch(payload) {
-    dispatcher.dispatch(name, payload);
+  function action(payload) {
+    dispatcher.dispatch(action, payload);
   }
 
-  dispatch.toString = function() { return name };
+  action.toString = function() { return name };
+  action.id = id++;
 
-  return dispatch;
+  return action;
 }
 
 /**
@@ -19130,7 +19123,7 @@ Action.create = function() {
 
 
 module.exports = Action;
-},{"./dispatcher":155,"./invariant":156}],154:[function(require,module,exports){
+},{"./dispatcher":155}],154:[function(require,module,exports){
 'use strict';
 
 
@@ -19147,23 +19140,24 @@ function Store(factory) {
       waitFor;
 
   function on(action, handler) {
-    handlers[action] = handler;
+    handlers[action.id] = handler;
   }
 
   function dependOn() {
     dependencies = Array.prototype.slice.call(arguments);
   }
 
-  var instance = factory(on, dependOn);
+  var instance = factory(on, dependOn) || {};
+  instance._name = factory.name;
 
   dispatcher.register(instance);
 
-  instance._handleAction = function(actionName, payload) {
+  instance._handleAction = function(action, payload) {
     var handler, result;
 
     // If this store subscribed to that action
-    if (actionName in handlers) {
-      handler = handlers[actionName];
+    if (action.id in handlers) {
+      handler = handlers[action.id];
 
       // handlers are optional
       if (handler) {
@@ -19172,8 +19166,11 @@ function Store(factory) {
         result = handler(payload);
       }
 
-      if (result !== false)
+      if (result !== false) {
         instance.changed.dispatch();
+        return true;
+      }
+      else return false;
     }
   };
 
@@ -19217,7 +19214,7 @@ Store.onChange = function() {
       }
     }
   };
-}
+};
 
 
 module.exports = Store;
@@ -19225,8 +19222,6 @@ module.exports = Store;
 'use strict';
 
 var Signal    = require('signals').Signal;
-var invariant = require('./invariant');
-
 
 /**
 * Singleton dispatcher used to broadcast payloads to stores.
@@ -19255,10 +19250,8 @@ var dispatcher = (function() {
   }
 
   function unregister(store) {
-    ("production" !== "development" ? invariant(stores[store._id],
-      'Dispatcher.unregister(...): `%s` does not map to a registered store.',
-      store
-    ) : invariant(stores[store._id]));
+    if (!stores[store._id]) throw new Error(
+      'Dispatcher.unregister(...): `' + store._name + '` is not to a registered store.');
 
     delete stores[store._id];
   }
@@ -19266,38 +19259,37 @@ var dispatcher = (function() {
   function waitFor() {
     var storeDeps = arguments;
 
-    ("production" !== "development" ? invariant(dispatching,
-      'dispatcher.waitFor(...): Must be invoked while dispatching.'
-    ) : invariant(dispatching));
+    if (!dispatching) throw new Error(
+      'dispatcher.waitFor(...): Must be invoked while dispatching.');
 
     for (var i = 0; i < storeDeps.length; i++) {
       var store = storeDeps[i];
       var id = store._id;
 
       if (isPending[id]) {
-        ("production" !== "development" ? invariant(isHandled[id],
-          'dispatcher.waitFor(...): Circular dependency detected while ' +
-          'waiting for `%s`.',
-          id
-        ) : invariant(isHandled[id]));
+        if (!isHandled[id]) throw new Error(
+          'dispatcher.waitFor(...): Circular dependency detected while waiting for ' + id);
+
         continue;
       }
 
-      ("production" !== "development" ? invariant(stores[id],
-        'dispatcher.waitFor(...): `%s` does not map to a registered store.',
-        id
-      ) : invariant(stores[id]));
+      if (!stores[id]) throw new Error(
+        'dispatcher.waitFor(...): ' + id + ' does not map to a registered store.');
 
       notifyStore(id);
     }
   }
 
-  function dispatch(actionName, payload) {
-    ("production" !== "development" ? invariant(!dispatching,
-      'dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch.'
-    ) : invariant(!dispatching));
+  function dispatch(action, payload) {
+    if (dispatching) throw new Error(
+      'dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch.');
 
-    currentAction = actionName;
+    if (dispatcher.log) {
+      console.log('%c' + action, 'color: #F51DE3', 'dispatched with payload ', payload);
+      console.log('  handled by stores: ');
+    }
+
+    currentAction = action;
     currentPayload = payload;
 
     startDispatching();
@@ -19333,11 +19325,19 @@ var dispatcher = (function() {
 
   function notifyStore(id) {
     isPending[id] = true;
-    stores[id]._handleAction(currentAction, currentPayload);
+
+    var store = stores[id];
+    var result = store._handleAction(currentAction, currentPayload);
+
+    if (dispatcher.log && result !== undefined) {
+      var updateMsg = (result === false) ? '(did not update its UI state)' : '';
+      console.log('    %c' + store._name, 'color: blue', updateMsg);
+    }
+
     isHandled[id] = true;
   }
 
-  return {
+  var dispatcher = {
     register: register,
     unregister: unregister,
     waitFor: waitFor,
@@ -19346,47 +19346,9 @@ var dispatcher = (function() {
     stopped: stopped
   };
 
+  return dispatcher;
 })();
 
 
 module.exports = dispatcher;
-},{"./invariant":156,"signals":152}],156:[function(require,module,exports){
-'use strict';
-
-/**
- * Use invariant() to assert state which your program assumes to be true.
- *
- * Provide sprintf-style format (only %s is supported) and arguments
- * to provide information about what broke and what you were
- * expecting.
- *
- * The invariant message will be stripped in production, but the invariant
- * will remain to ensure logic does not differ in production.
- */
-var invariant = function(condition, format, a, b, c, d, e, f) {
-  if (!condition) {
-    var error;
-    if (format === undefined) {
-      error = new Error(
-        'Minified exception occurred; use the non-minified dev environment ' +
-        'for the full error message and additional helpful warnings.'
-      );
-    }
-    else {
-      var args = [a, b, c, d, e, f];
-      var argIndex = 0;
-
-      error = new Error(
-        'Invariant Violation: ' +
-        format.replace(/%s/g, function() { return args[argIndex++]; })
-      );
-    }
-
-    error.framesToPop = 1; // we don't care about invariant's own frame
-    throw error;
-  }
-};
-
-
-module.exports = invariant;
-},{}]},{},[150])
+},{"signals":152}]},{},[150])
