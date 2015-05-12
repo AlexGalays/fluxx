@@ -110,7 +110,7 @@ var derivedValueStore = Store(function(on, dependOn) {
 - Simplified API: Removed boilerplate, got rid of dispatch tokens: Instead use store instances directly.
 
 ```javascript
-dispatcher.waitFor([store1.dispatchToken, token2.dispatchToken])
+dispatcher.waitFor([store1.dispatchToken, store2.dispatchToken])
 // Becomes
 dependOn(store1, store2)
 ```
