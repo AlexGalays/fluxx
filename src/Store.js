@@ -22,7 +22,7 @@ function Store(factory) {
   }
 
   var instance = factory(on, dependOn) || {};
-  instance._name = factory.name;
+  instance._name = factory.name || '[no name]';
 
   dispatcher.register(instance);
 
