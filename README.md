@@ -17,7 +17,7 @@ var Store = require('fluxx').Store;
 var Action = require('fluxx').Action;
 var onChange = Store.onChange;
 
-var valueStore = Store(function(on) {
+var valueStore = Store(function myStoreName(on) {
 
   // The store's actual state
   var value = 0;
@@ -63,9 +63,9 @@ onChange(valueStore, anotherStore)(render);
 ```javascript
 var valueStore = require('./valueStore');
 
-var derivedValueStore = Store(function(on, dependOn) {
+var derivedValueStore = Store(function myDerivedStoreName(on, dependOn) {
 
-  // This derived store depends on valueStore, meaning we let valueStore update itself first.
+  // This derived store depends on valueStore, meaning we let valueStore update its state before we do.
   dependOn(valueStore);
 
   var value;
