@@ -7,7 +7,7 @@ var decrement  = actions.decrement;
 var increment  = actions.increment;
 
 
-module.exports = Store(function(on, waitFor) {
+module.exports = Store(function greenNumber(on) {
 
   var currentOffset = 0;
 

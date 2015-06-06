@@ -4,7 +4,8 @@ var init       = require('./actions').init;
 var blueNumber = require('./blueNumber');
 
 
-module.exports = Store(function(on, dependOn) { dependOn(blueNumber);
+module.exports = Store(function redNumber(on, dependOn) {
+  dependOn(blueNumber);
 
   var value = 0;
 

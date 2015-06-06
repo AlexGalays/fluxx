@@ -1,6 +1,7 @@
 /** @jsx React.DOM */
 
 var React       = require('react');
+var fluxx       = require('../../src/fluxx');
 var blueNumber  = require('./blueNumber');
 var greenNumber = require('./greenNumber');
 var redNumber   = require('./redNumber');
@@ -24,4 +25,5 @@ function render() {
 
 onChange(blueNumber, greenNumber, redNumber)(render);
 
+fluxx.enableLogs();
 init(10);
