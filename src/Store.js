@@ -18,7 +18,7 @@ function Store(factory) {
   }
 
   function dependOn() {
-    dependencies = Array.prototype.slice.call(arguments);
+    dependencies = [].slice.call(arguments);
   }
 
   var instance = factory(on, dependOn) || {};
@@ -26,7 +26,7 @@ function Store(factory) {
 
   dispatcher.register(instance);
 
-  instance._handleAction = function(action, payload) {
+  instance._handleAction = function(action, payloads) {
     var handler, result;
 
     // If this store subscribed to that action
@@ -36,8 +36,7 @@ function Store(factory) {
       // handlers are optional
       if (handler) {
         dispatcher.waitFor.apply(null, dependencies);
-
-        result = handler(payload);
+        result = handler.apply(null, payloads);
       }
 
       if (result !== false) {

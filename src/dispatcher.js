@@ -59,17 +59,17 @@ var dispatcher = (function() {
     }
   }
 
-  function dispatch(action, payload) {
+  function dispatch(action, payloads) {
     if (dispatching) throw new Error(
       'dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch.');
 
     if (dispatcher.log) {
-      console.log('%c' + action, 'color: #F51DE3', 'dispatched with payload ', payload);
+      console.log('%c' + action, 'color: #F51DE3', 'dispatched with payload ', payloads.join(', '));
       console.log('  handled by stores: ');
     }
 
     currentAction = action;
-    currentPayload = payload;
+    currentPayload = payloads;
 
     startDispatching();
 

@@ -15,8 +15,9 @@ var id = 1;
 */
 function Action(name) {
 
-  function action(payload) {
-    dispatcher.dispatch(action, payload);
+  function action() {
+    var payloads = [].slice.call(arguments);
+    dispatcher.dispatch(action, payloads);
   }
 
   action.toString = function() { return name };
