@@ -121,7 +121,8 @@ dependOn(store1, store2)
 
 ## Enabling logging
 
-This will log all action dispatching along with the list of stores that handled the action.
+This will log all action dispatching along with the list of stores that handled the action.  
+Note: For easier debugging, name your stores, e.g `var store = Store(function someName() {})`
 
 ```javascript
 var fluxx = require('fluxx');
