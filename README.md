@@ -12,71 +12,84 @@ but there is far less boilerplate.
 
 ## Simple example
 
+
+### store.js (Store and Actions)
 ```javascript
 var Store = require('fluxx').Store;
 var Action = require('fluxx').Action;
-var onChange = Store.onChange;
 
-var valueStore = Store(function myStoreName(on) {
+var action = Action.create('init', 'increment', 'decrement');
 
-  // The store's actual state
+var store = Store(function valueStore(on) {
+
+  // The store's internal state
   var value = 0;
 
   // When the store receives the init Action,
   // initialize its initial state with the action's payload.
-  on(init, function(val) {
+  on(action.init, val => {
     value = val;
   });
 
-  on(decrement, function(offset) {
+  on(action.decrement, offset => {
     value -= offset;
   });
 
-  on(increment, function(offset) {
+  on(action.increment, offset => {
     value += offset;
   });
 
-  // The store public API
+  // The store public API; Here we decided to only use functions (Uniform access principle)
   return {
-    value: function() { return value }
+    value: () => value
   };
 });
 
-/* Somewhere else in the code */
-
-// Create an action object with an unique name
-var increment = Action('increment');
-
-// increment store's value by 33
-increment(33);
-
-
-/* Somewhere else in the code */
-
-// Render again whenever the store changed
-onChange(valueStore, anotherStore)(render);
-
+module.exports = { store, action };
 ```
+
+### view.js Redrawing the view on store change
+```javascript
+
+var { onChange } = require('fluxx').Store;
+var { store, action } = require('./valueStore');
+
+// Render again whenever the store changes
+onChange(store)(render);
+
+function render() {
+  console.log('render!');
+  // Actually render a component using React, virtual-dom, etc 
+}
+
+// Trigger the increment action: Increment store's value by 33
+action.increment(33);
+
+``` 
+
 
 ## Example showing dependOn and preventing change dispatch
 
 ```javascript
-var valueStore = require('./valueStore');
+var { store, action } = require('./valueStore');
 
 var derivedValueStore = Store(function myDerivedStoreName(on, dependOn) {
 
-  // This derived store depends on valueStore, meaning we let valueStore update its state before we do.
-  dependOn(valueStore);
+  /*
+   * This derived store depends on valueStore, meaning we let valueStore update its state before we do, for every action we listen to.
+   * However, this store will dispatch change events only for the actions it explicitely listens to.
+   */
+  dependOn(store);
 
   var value;
 
-  on(init, function() {
+  on(action.init, function() {
     value = derivedValue();
   });
 
   // Not interested in the decrement action
 
-  on(increment, function() {
+  on(action.increment, function() {
     var newValue = derivedValue();
 
     // Only increment our value if the primary store's value is under 100.
@@ -86,12 +99,12 @@ var derivedValueStore = Store(function myDerivedStoreName(on, dependOn) {
   });
 
   function derivedValue() {
-    return valueStore.value() * 2;
+    return store.value() * 2;
   }
 
   // The store public API
   return {
-    value: function() { return value }
+    value: () => value
   };
 
 });
@@ -122,7 +135,7 @@ dependOn(store1, store2)
 ## Enabling logging
 
 This will log all action dispatching along with the list of stores that handled the action.  
-Note: For easier debugging, name your stores, e.g `var store = Store(function someName() {})`
+Note: For easier debugging, give proper names to your stores, e.g `var store = Store(function someName() {})`
 
 ```javascript
 var fluxx = require('fluxx');
