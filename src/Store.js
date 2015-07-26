@@ -1,7 +1,7 @@
 'use strict';
 
 
-var Signal     = require('signals').Signal;
+var EventEmitter = require('events');
 var dispatcher = require('./dispatcher');
 
 
@@ -22,6 +22,7 @@ function Store(factory) {
   }
 
   var instance = factory(on, dependOn) || {};
+  instance._emitter = new EventEmitter;
   instance._name = factory.name || '[no name]';
 
   dispatcher.register(instance);
@@ -40,7 +41,7 @@ function Store(factory) {
       }
 
       if (result !== false) {
-        instance.changed.dispatch();
+        instance._emitter.emit('changed');
         return true;
       }
       else return false;
@@ -51,10 +52,9 @@ function Store(factory) {
     dispatcher.unregister(instance);
   };
 
-  instance.changed = new Signal();
-
   return instance;
 }
+
 
 /**
 * Calls a function if any of the passed
@@ -72,18 +72,18 @@ Store.onChange = function() {
     function stopped() { if (count) callback() }
 
     for (var i = 0; i < stores.length; i++) {
-      stores[i].changed.add(inc);
+      stores[i]._emitter.on('changed', inc);
     }
 
-    dispatcher.started.add(started);
-    dispatcher.stopped.add(stopped);
+    dispatcher.on('started', started);
+    dispatcher.on('stopped', stopped);
 
     return function unsub() {
-      dispatcher.started.remove(started);
-      dispatcher.stopped.remove(stopped);
+      dispatcher.removeListener('started', started);
+      dispatcher.removeListener('stopped', stopped);
 
       for (var i = 0; i < stores.length; i++) {
-        stores[i].changed.remove(inc);
+        stores[i]._emitter.removeListener('changed', inc);
       }
     }
   };

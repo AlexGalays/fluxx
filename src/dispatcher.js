@@ -1,9 +1,9 @@
 'use strict';
 
-var Signal    = require('signals').Signal;
+var EventEmitter = require('events');
 
 /**
-* Singleton dispatcher used to broadcast payloads to stores.
+* Singleton dispatcher used to broadcast action payloads to stores. You do not use this module directly.
 * Ensures the application state stored in the stores is updated predictably.
 */
 var dispatcher = (function() {
@@ -18,8 +18,7 @@ var dispatcher = (function() {
   var currentAction = null;
   var currentPayload = null;
 
-  var started = new Signal();
-  var stopped = new Signal();
+  var dispatcher = Object.create(new EventEmitter);
 
 
   function register(store) {
@@ -92,14 +91,14 @@ var dispatcher = (function() {
       isHandled[id] = false;
     }
 
-    started.dispatch();
+    dispatcher.emit('started');
   }
 
   function stopDispatching() {
     currentAction = currentPayload = null;
     dispatching = false;
 
-    stopped.dispatch();
+    dispatcher.emit('stopped');
   }
 
   function notifyStore(id) {
@@ -116,14 +115,10 @@ var dispatcher = (function() {
     isHandled[id] = true;
   }
 
-  var dispatcher = {
-    register: register,
-    unregister: unregister,
-    waitFor: waitFor,
-    dispatch: dispatch,
-    started: started,
-    stopped: stopped
-  };
+  dispatcher.register = register;
+  dispatcher.unregister = unregister;
+  dispatcher.waitFor = waitFor;
+  dispatcher.dispatch = dispatch;
 
   return dispatcher;
 })();

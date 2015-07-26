@@ -146,3 +146,8 @@ fluxx.enableLogs();
 ## Full example
 
 [Here](example/src)
+
+# Running the tests
+```
+mocha --ui tdd
+```

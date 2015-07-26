@@ -1,6 +1,6 @@
 {
   "name": "fluxx",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "main": "src/fluxx",
   "description": "Facebook flux-like Store, Action",
   "keywords": ["flux", "facebook", "dispatcher", "store", "action", "reactive", "unidirectional"],
@@ -16,6 +16,11 @@
   },
 
   "dependencies": {
-    "signals": "1.0.0"
+    "events": "1.0.2"
+  },
+
+  "devDependencies": {
+    "mocha": "2.1.0",
+    "better-assert": "1.0.1"
   }
 }
