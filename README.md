@@ -9,14 +9,15 @@ The key elements are kept
 
 but there is far less boilerplate.
 
+Fluxx also support a [state-machine notation for action handlers](#stateMachine).
+
 
 ## Simple example
 
 
 ### store.js (Store and Actions)
 ```javascript
-var Store = require('fluxx').Store;
-var Action = require('fluxx').Action;
+var { Store, Action } = require('fluxx');
 
 var action = Action.create('init', 'increment', 'decrement');
 
@@ -146,6 +147,39 @@ fluxx.enableLogs();
 ## Full example
 
 [Here](example/src)
+
+<a name="stateMachine"></a>
+## State machine
+
+```javascript
+var { Store, Action } = require('fluxx');
+
+var { push, coin } = Action.create('push', 'coin');
+
+Store(function turnstile(on, _, when) {
+
+  var locked = true;
+
+  // Handler without a condition
+  on(push, _ => console.log('push'));
+
+  // Handlers valid only when the turnstile is locked
+  when(_ => locked, function() {
+    on(coin, _ => { locked = false });
+  });
+
+  // Handlers valid only when the turnstile is unlocked
+  when(_ => !locked, function() {
+    on(push, _ => { locked = true });
+  });
+
+});
+
+coin();
+push();
+
+```
+
 
 # Running the tests
 ```
