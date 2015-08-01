@@ -1,7 +1,8 @@
-var assert = require('better-assert'),
-    fluxx  = require('./src/fluxx'),
-    Store  = fluxx.Store,
-    Action = fluxx.Action;
+var assert    = require('better-assert'),
+    fluxx     = require('./src/fluxx'),
+    NO_CHANGE = fluxx.NO_CHANGE,
+    Store     = fluxx.Store,
+    Action    = fluxx.Action;
 
 
 suite('fluxx', function() {
@@ -9,11 +10,13 @@ suite('fluxx', function() {
   test('Store.onChange', function() {
 
     var fired = 0;
-    var action = Action.create('fire', 'missfire');
+    var action = Action.create('fire', 'missfire', 'ignored', 'not_ignored');
 
     function makeStore() {
       return Store(function(on) {
-        on(action.fire)
+        on(action.fire);
+        on(action.ignored, function() { return NO_CHANGE });
+        on(action.not_ignored, function() { return false })
       });
     }
 
@@ -35,17 +38,25 @@ suite('fluxx', function() {
     action.missfire();
     assert(fired == 1);
 
-    unsub();
-    action.fire();
+    // Actions returning NO_CHANGE do not trigger a change event
+    action.ignored();
     assert(fired == 1);
 
-    // Manually subscribing to store1
+    // Actions returning false do trigger a change event
+    action.not_ignored();
+    assert(fired == 2);
+
+    unsub();
+    action.fire();
+    assert(fired == 2);
+
+    // Manually subscribing to store1 (just testing the store is still active)
     store1._emitter.on('changed', function() {
       fired++;
     });
 
     action.fire();
-    assert(fired == 2);
+    assert(fired == 3);
   });
 
 

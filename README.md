@@ -21,24 +21,17 @@ var { Store, Action } = require('fluxx');
 
 var action = Action.create('init', 'increment', 'decrement');
 
-var store = Store(function valueStore(on) {
+var store = Store(function(on) {
 
   // The store's internal state
   var value = 0;
 
   // When the store receives the init Action,
   // initialize its initial state with the action's payload.
-  on(action.init, val => {
-    value = val;
-  });
+  on(action.init, val => value = val);
 
-  on(action.decrement, offset => {
-    value -= offset;
-  });
-
-  on(action.increment, offset => {
-    value += offset;
-  });
+  on(action.decrement, offset => value -= offset);
+  on(action.increment, offset => value += offset);
 
   // The store public API; Here we decided to only use functions (Uniform access principle)
   return {
@@ -46,17 +39,17 @@ var store = Store(function valueStore(on) {
   };
 });
 
-module.exports = { store, action };
+export { store, action };
 ```
 
 ### view.js Redrawing the view on store change
 ```javascript
 
-var { onChange } = require('fluxx').Store;
-var { store, action } = require('./valueStore');
+import { Store } from 'fluxx';
+import { store, action } from './valueStore';
 
 // Render again whenever the store changes
-onChange(store)(render);
+Store.onChange(store)(render);
 
 function render() {
   console.log('render!');
@@ -72,9 +65,9 @@ action.increment(33);
 ## Example showing dependOn and preventing change dispatch
 
 ```javascript
-var { store, action } = require('./valueStore');
+import { store, action } from './valueStore';
 
-var derivedValueStore = Store(function myDerivedStoreName(on, dependOn) {
+var derivedValueStore = Store(function(on, dependOn) {
 
   /*
    * This derived store depends on valueStore, meaning we let valueStore update its state before we do, for every action we listen to.
@@ -103,7 +96,7 @@ var derivedValueStore = Store(function myDerivedStoreName(on, dependOn) {
     return store.value() * 2;
   }
 
-  // The store public API
+  // The store public API; this could return many util functions.
   return {
     value: () => value
   };
@@ -152,7 +145,7 @@ fluxx.enableLogs();
 ## State machine
 
 ```javascript
-var { Store, Action } = require('fluxx');
+import { Store, Action } from 'fluxx';
 
 var { push, coin } = Action.create('push', 'coin');
 
@@ -164,13 +157,13 @@ Store(function turnstile(on, _, when) {
   on(push, _ => console.log('push'));
 
   // Handlers valid only when the turnstile is locked
-  when(_ => locked, function() {
-    on(coin, _ => { locked = false });
+  when(_ => locked, () => {
+    on(coin, _ => locked = false);
   });
 
   // Handlers valid only when the turnstile is unlocked
-  when(_ => !locked, function() {
-    on(push, _ => { locked = true });
+  when(_ => !locked, () => {
+    on(push, _ => locked = true);
   });
 
 });

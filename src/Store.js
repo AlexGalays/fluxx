@@ -3,7 +3,7 @@
 
 var EventEmitter = require('events');
 var dispatcher = require('./dispatcher');
-
+var NO_CHANGE = require('./noChange');
 
 /**
 * Creates and register a new store.
@@ -60,11 +60,11 @@ function Store(factory) {
         handlerResult = handler.apply(null, payloads);
       }
 
-      // If the handler returns anything other than a strict false value,
+      // If the handler returns anything other than NO_CHANGE,
       // we consider the store did change as a result of the action being handled.
-      return (handlerResult === false) ? changed || false : true;
+      return (handlerResult == NO_CHANGE) ? changed || false : true;
 
-    }, undefined);
+    }, false);
 
     if (changed !== false)
       instance._emitter.emit('changed');
