@@ -11,15 +11,32 @@ but there is far less boilerplate.
 
 Coming soon: React adapters
 
+# Content
+* [Stores](#stores)
+  * [Simple Store](#store)
+  * [ActorStore](#actorStore)
+    * [Defining a store and its actions](#storeAndActions)
+    * [Depending on another store](#dependOn)
+    * [Preventing the changed event from being dispatched](#preventChangeEvent)
+    * [State machine](#stateMachine)
+* [Manually redrawing the view on store change](#manualRedraw)
+* [Differences with the Facebook implementation](#facebookImplementation)
+* [Full example](#fullExample)
+
+
+<a name="stores"></a>
 ## Stores
 
 There are two possible styles to create Stores in fluxx.  
 Choose the style you prefer, you can even mix the two styles in the same application.  
 As a rule of thumb, if you're using ES6, try to pick the simple `Store` as a default.  
 
+<a name="store"></a>
+### Simple Store
+
 `Store` has a more functional style but is a bit more limited     
 
-```javascript```
+```javascript
 var { Store, Action } = require('fluxx');
 var otherStore = require('./otherStore');
 
@@ -43,6 +60,8 @@ console.log(store.state == 25);
 
 ``` 
 
+<a name="actorStore"></a>
+### ActorStore
 `ActorStore` has a more Object Oriented style
 
 ```javascript
@@ -80,9 +99,7 @@ console.log(store.value() == 25);
 In any case, if you need to update a Store's state (usually a JSON-like tree) in an immutable way, have a look at: [immupdate](https://github.com/AlexGalays/immupdate)  
 
 
-
-## ActorStore examples
-
+<a name="storeAndActions"></a>
 ### Defining a Store and its Actions
 ```javascript
 var { ActorStore, Action } = require('fluxx');
@@ -109,30 +126,11 @@ var store = ActorStore(function(on) {
 export { store, action };
 ```
 
-### Manually redrawing the view on store change
-```javascript
-
-import { onChange } from 'fluxx';
-import { store, action } from './valueStore';
-
-// Render again whenever the store changes
-onChange(store)(render);
-
-function render() {
-  console.log('render!');
-  // Actually render a component using React, virtual-dom, etc 
-}
-
-// Trigger the increment action: Increment store's value by 33
-action.increment(33);
-
-``` 
-
-
-### `dependOn` and preventing the `changed` event from being dispatched
+<a name="dependOn"></a>
+### Depending on another store
 
 ```javascript
-import { ActorStore, NO_CHANGE } from 'fluxx';
+import { ActorStore } from 'fluxx';
 import { store, action } from './valueStore';
 
 var derivedValueStore = ActorStore(function(on, dependOn) {
@@ -143,26 +141,35 @@ var derivedValueStore = ActorStore(function(on, dependOn) {
    */
   dependOn(store);
 
-  var value;
-
-  on(action.init, function() {
-    value = derivedValue();
-  });
-
   // Not interested in the decrement action
 
-  on(action.increment, function() {
-    var newValue = derivedValue();
+  on(action.increment);
 
-    // Only increment our value if the primary store's value is under 100.
-    if (newValue < 100) value = newValue;
-    // As an optimization, we can return NO_CHANGE to tell the dispatcher this store's state didn't actually change.
+  // The store public API; this could return many util functions.
+  return {
+    value: () => store.value() * 2
+  };
+
+});
+
+```
+
+<a name="preventChangeEvent"></a>
+### Preventing the `changed` event from being dispatched
+
+As an optimization, an action handler can return `NO_CHANGE` to tell the dispatcher this store's state didn't actually change.
+
+```javascript
+import { ActorStore, NO_CHANGE } from 'fluxx';
+
+ActorStore(function(on) {
+
+  var value = 0;
+
+  on(action.increment, function() {
+    if (value < 100) value++;
     else return NO_CHANGE;
   });
-
-  function derivedValue() {
-    return store.value() * 2;
-  }
 
   // The store public API; this could return many util functions.
   return {
@@ -206,8 +213,28 @@ push();
 ```
 
 
+<a name="manualRedraw"></a>
+## Manually redrawing the view on store change
+```javascript
 
-## Differences with the Facebook examples
+import { onChange } from 'fluxx';
+import { store, action } from './valueStore';
+
+// Render again whenever the store changes; `onChange` can take any number of stores as arguments.
+onChange(store)(render);
+
+function render() {
+  console.log('render!');
+  // Actually render a component using React, virtual-dom, etc 
+}
+
+// Trigger the increment action: Increment store's value by 33
+action.increment(33);
+
+``` 
+
+<a name="facebookImplementation"></a>
+## Differences with the Facebook implementation
 
 - The dispatcher is now an implementation detail. It is no longer needed to explicitly import it in your code. (The actions and stores use it behind the scene)
 
@@ -238,6 +265,7 @@ var fluxx = require('fluxx');
 fluxx.enableLogs();
 ```
 
+<a name="fullExample"></a>
 ## Full example
 
 [Here](example/src)
