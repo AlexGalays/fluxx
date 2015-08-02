@@ -1,19 +1,95 @@
-var assert    = require('better-assert'),
-    fluxx     = require('./src/fluxx'),
-    NO_CHANGE = fluxx.NO_CHANGE,
-    Store     = fluxx.Store,
-    Action    = fluxx.Action;
+var assert     = require('better-assert'),
+    fluxx      = require('./src/fluxx'),
+    onChange   = fluxx.onChange,
+    NO_CHANGE  = fluxx.NO_CHANGE,
+    Store      = fluxx.Store,
+    ActorStore = fluxx.ActorStore,
+    Action     = fluxx.Action;
 
 
 suite('fluxx', function() {
 
-  test('Store.onChange', function() {
+
+  test('Store', function() {
+
+    var fired = 0;
+    var action = Action.create('increment', 'decrement', 'noop', 'ignored');
+
+    function makeStore() {
+      var handlers = {};
+
+      handlers[action.increment] = function(counter, by) { return counter + by };
+      handlers[action.decrement] = function(counter, by) { return counter - by };
+      handlers[action.noop]      = function(counter) { return counter };
+
+      return Store({
+        state: 0,
+        handlers: handlers
+      });
+    }
+
+    function log() {
+      fired++;
+    }
+
+    var store1 = makeStore();
+    var store2 = makeStore();
+
+    var unsub = onChange(store1, store2)(log);
+
+    action.increment(10);
+
+    // onChange batches updates
+    assert(fired == 1);
+    assert(store1.state == 10);
+    assert(store2.state == 10);
+
+    // Unhandled actions do not trigger a change event
+    action.ignored();
+    assert(fired == 1);
+    assert(store1.state == 10);
+    assert(store2.state == 10);
+
+    // Noop action
+    action.noop();
+    assert(fired == 2);
+    assert(store1.state == 10);
+    assert(store2.state == 10);
+
+    // Decrement
+    action.decrement(5);
+    assert(fired == 3);
+    assert(store1.state == 5);
+    assert(store2.state == 5);
+
+    unsub();
+    action.increment(15);
+    assert(fired == 3);
+    assert(store1.state == 20);
+    assert(store2.state == 20);
+
+    // Manually subscribing to store1 (just testing the store is still active)
+    store1._emitter.on('changed', function() {
+      fired++;
+    });
+
+    action.increment(0);
+    assert(fired == 4);
+
+    store1.unregister();
+    store2.unregister();
+    action.increment(0);
+    assert(fired == 4);
+  });
+
+
+  test('ActorStore', function() {
 
     var fired = 0;
     var action = Action.create('fire', 'missfire', 'ignored', 'not_ignored');
 
     function makeStore() {
-      return Store(function(on) {
+      return ActorStore(function(on) {
         on(action.fire);
         on(action.ignored, function() { return NO_CHANGE });
         on(action.not_ignored, function() { return false })
@@ -27,7 +103,7 @@ suite('fluxx', function() {
     var store1 = makeStore();
     var store2 = makeStore();
 
-    var unsub = Store.onChange(store1, store2)(log);
+    var unsub = onChange(store1, store2)(log);
 
     action.fire();
 
@@ -57,17 +133,22 @@ suite('fluxx', function() {
 
     action.fire();
     assert(fired == 3);
+
+    store1.unregister();
+    store2.unregister();
+    action.fire();
+    assert(fired == 3);
   });
 
 
-  test('Store as a state machine', function() {
+  test('ActorStore as a state machine', function() {
 
     var run = 0;
     var batteryChecks = 0;
 
     var action = Action.create('run', 'activate', 'deactivate', 'check_battery');
 
-    var store = Store(function(on, _, when) {
+    var store = ActorStore(function(on, _, when) {
 
       when(activated, activatedStore);
       when(not(activated), deactivatedStore);
@@ -141,7 +222,6 @@ suite('fluxx', function() {
     assert(store.run() == 2);
     assert(!store.activated());
   });
-
 
 });
 

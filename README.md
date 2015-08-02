@@ -7,23 +7,90 @@ The key elements are kept
 - A central dispatcher enforcing the sequential/unidirectional flow
 - Stores can depend on other stores
 
-but there is far less boilerplate.
+but there is far less boilerplate.  
 
-Fluxx also support a [state-machine notation for action handlers](#stateMachine).
+Coming soon: React adapters
 
+## Stores
 
-## Simple example
+There are two possible styles to create Stores in fluxx.  
+Choose the style you prefer, you can even mix the two styles in the same application.  
+As a rule of thumb, if you're using ES6, try to pick the simple `Store` as a default.  
 
+`Store` has a more functional style but is a bit more limited     
 
-### store.js (Store and Actions)
-```javascript
+```javascript```
 var { Store, Action } = require('fluxx');
+var otherStore = require('./otherStore');
+
+var action = Action.create('increment', 'decrement');
+
+var store = Store({
+  state: 0,
+
+  handlers: {
+    [action.increment]: (state, by) => state + by,
+    [action.decrement]: (state, by) => state - by
+  },
+
+  dependOn: otherStore
+});
+
+action.increment(30);
+action.decrement(5);
+
+console.log(store.state == 25);
+
+``` 
+
+`ActorStore` has a more Object Oriented style
+
+```javascript
+var { ActorStore, Action } = require('fluxx');
+var otherStore = require('./otherStore');
+
+var action = Action.create('increment', 'decrement');
+
+var store = ActorStore(function(on, dependOn) {
+  dependOn(otherStore);
+
+  // The store's private state; The store could have many of these.
+  var value = 0;
+
+  // When the store receives the init Action,
+  // initialize its initial state with the action's payload.
+  on(action.init, val => value = val);
+
+  on(action.decrement, offset => value -= offset);
+  on(action.increment, offset => value += offset);
+
+  // The store public API; Here we decided to only use functions (Uniform access principle)
+  // For convenience, the API can be rich and return various utility functions (`findById`, etc)
+  return {
+    value: () => value
+  };
+});
+
+action.increment(30);
+action.decrement(5);
+
+console.log(store.value() == 25);
+```
+
+In any case, if you need to update a Store's state (usually a JSON-like tree) in an immutable way, have a look at: [immupdate](https://github.com/AlexGalays/immupdate)  
+
+
+
+## ActorStore examples
+
+### Defining a Store and its Actions
+```javascript
+var { ActorStore, Action } = require('fluxx');
 
 var action = Action.create('init', 'increment', 'decrement');
 
-var store = Store(function(on) {
+var store = ActorStore(function(on) {
 
-  // The store's internal state
   var value = 0;
 
   // When the store receives the init Action,
@@ -42,14 +109,14 @@ var store = Store(function(on) {
 export { store, action };
 ```
 
-### view.js Redrawing the view on store change
+### Manually redrawing the view on store change
 ```javascript
 
-import { Store } from 'fluxx';
+import { onChange } from 'fluxx';
 import { store, action } from './valueStore';
 
 // Render again whenever the store changes
-Store.onChange(store)(render);
+onChange(store)(render);
 
 function render() {
   console.log('render!');
@@ -62,16 +129,17 @@ action.increment(33);
 ``` 
 
 
-## Example showing dependOn and preventing change dispatch
+### `dependOn` and preventing the `changed` event from being dispatched
 
 ```javascript
+import { ActorStore, NO_CHANGE } from 'fluxx';
 import { store, action } from './valueStore';
 
-var derivedValueStore = Store(function(on, dependOn) {
+var derivedValueStore = ActorStore(function(on, dependOn) {
 
   /*
    * This derived store depends on valueStore, meaning we let valueStore update its state before we do, for every action we listen to.
-   * However, this store will dispatch change events only for the actions it explicitely listens to.
+   * However, this store will only dispatch change events for the actions it explicitly listens to.
    */
   dependOn(store);
 
@@ -88,8 +156,8 @@ var derivedValueStore = Store(function(on, dependOn) {
 
     // Only increment our value if the primary store's value is under 100.
     if (newValue < 100) value = newValue;
-    // As an optimization, we can return false to tell the dispatcher this store's state didn't actually change.
-    else return false;
+    // As an optimization, we can return NO_CHANGE to tell the dispatcher this store's state didn't actually change.
+    else return NO_CHANGE;
   });
 
   function derivedValue() {
@@ -105,6 +173,39 @@ var derivedValueStore = Store(function(on, dependOn) {
 
 ```
 
+<a name="stateMachine"></a>
+### State machine
+
+```javascript
+import { ActorStore, Action } from 'fluxx';
+
+var { push, coin } = Action.create('push', 'coin');
+
+ActorStore(function turnstile(on, _, when) {
+
+  var locked = true;
+
+  // Handler without a condition
+  on(push, _ => console.log('push'));
+
+  // Handlers valid only when the turnstile is locked
+  when(_ => locked, () => {
+    on(coin, _ => locked = false);
+  });
+
+  // Handlers valid only when the turnstile is unlocked
+  when(_ => !locked, () => {
+    on(push, _ => locked = true);
+  });
+
+});
+
+coin();
+push();
+
+```
+
+
 
 ## Differences with the Facebook examples
 
@@ -112,7 +213,7 @@ var derivedValueStore = Store(function(on, dependOn) {
 
 - Provide a constructor for Stores. The examples encourage `switch/case/break` which is pretty poor style and error prone in JS or in most language; Instead, a list of action -> callback is used.
 
-- Provide a constructor for Actions.
+- Provide a constructor for Actions. Actions instances can be used directly in stores: No need for tedious constants.
 
 - Simplified API: Removed boilerplate, got rid of dispatch tokens: Instead use store instances directly.
 
@@ -141,40 +242,8 @@ fluxx.enableLogs();
 
 [Here](example/src)
 
-<a name="stateMachine"></a>
-## State machine
 
-```javascript
-import { Store, Action } from 'fluxx';
-
-var { push, coin } = Action.create('push', 'coin');
-
-Store(function turnstile(on, _, when) {
-
-  var locked = true;
-
-  // Handler without a condition
-  on(push, _ => console.log('push'));
-
-  // Handlers valid only when the turnstile is locked
-  when(_ => locked, () => {
-    on(coin, _ => locked = false);
-  });
-
-  // Handlers valid only when the turnstile is unlocked
-  when(_ => !locked, () => {
-    on(push, _ => locked = true);
-  });
-
-});
-
-coin();
-push();
-
-```
-
-
-# Running the tests
+## Running the tests
 ```
 mocha --ui tdd
 ```

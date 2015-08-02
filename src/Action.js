@@ -20,9 +20,9 @@ function Action(name) {
     dispatcher.dispatch(action, payloads);
   }
 
-  action.toString = function() { return name };
   action.id = id++;
-
+  action.toString = function() { return action.id };
+  
   return action;
 }
 
