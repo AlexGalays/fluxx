@@ -1,5 +1,5 @@
 
-var Action = require('../../src/Action');
+import Action from '../../src/Action';
 
 
-module.exports = Action.create('init', 'increment', 'decrement');
+export default Action.create('init', 'increment', 'decrement');

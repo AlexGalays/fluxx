@@ -1,28 +1,15 @@
-var Store     = require('../../src/Store');
-var actions   = require('./actions');
-
-var init      = actions.init;
-var decrement = actions.decrement;
-var increment = actions.increment;
+import Store from '../../src/Store';
+import { init, decrement, increment } from './actions';
 
 
-module.exports = Store(function blueNumber(on) {
+export default Store({
+  name: 'blueNumber',
 
-  var value = 0;
+  state: 0,
 
-  on(init, function(val) {
-    value = val;
-  });
-
-  on(decrement, function(offset) {
-    value -= offset;
-  });
-
-  on(increment, function(offset) {
-    value += offset;
-  });
-
-  return {
-    value: function() { return value }
-  };
+  handlers: {
+    [init]: (state, val) => val,
+    [decrement]: (state, offset) => state - offset,
+    [increment]: (state, offset) => state + offset
+  }
 });

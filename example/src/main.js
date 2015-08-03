@@ -1,29 +1,26 @@
-/** @jsx React.DOM */
-
-var React       = require('react');
-var fluxx       = require('../../src/fluxx');
-var blueNumber  = require('./blueNumber');
-var greenNumber = require('./greenNumber');
-var redNumber   = require('./redNumber');
-var App         = require('./App');
-var init        = require('./actions').init;
-var onChange    = require('../../src/Store').onChange;
+import React from 'react';
+import fluxx from '../../src/fluxx';
+import blueNumber from './blueNumber';
+import greenNumber from './greenNumber';
+import redNumber from './redNumber';
+import App from './App';
+import { init } from './actions';
 
 
 function render() {
   console.log('render');
 
-  return React.renderComponent(
+  return React.render(
     <App 
-      blueNumber={blueNumber.value()} 
+      blueNumber={blueNumber.state} 
       greenNumber={greenNumber.value()} 
-      redNumber={redNumber.value()} />,
+      redNumber={redNumber.state}/>,
 
     document.querySelector('body')
   );
 }
 
-onChange(blueNumber, greenNumber, redNumber)(render);
+fluxx.onChange(blueNumber, greenNumber, redNumber)(render);
 
 fluxx.enableLogs();
 init(10);

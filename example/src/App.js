@@ -1,10 +1,9 @@
-/** @jsx React.DOM */
 
-var React       = require('react');
-var MagicButton = require('./MagicButton');
+import React from 'react';
+import MagicButton from './MagicButton';
 
 
-var App = React.createClass({
+export default React.createClass({
 
   render: function() {
     return (
@@ -27,6 +26,3 @@ var App = React.createClass({
   }
 
 });
-
-
-module.exports = App;

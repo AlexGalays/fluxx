@@ -1,13 +1,11 @@
-/** @jsx React.DOM */
-
-var React   = require('react');
-var actions = require('./actions');
+import React from 'react';
+import { init, decrement, increment } from './actions';
 
 
-var MagicButton = React.createClass({
+export default React.createClass({
 
   getDefaultProps: function() {
-    return {offset: 4};
+    return { offset: 4 };
   },
 
   render: function() {
@@ -20,14 +18,11 @@ var MagicButton = React.createClass({
   },
 
   increment: function() {
-    actions.increment(this.props.offset);
+    increment(this.props.offset);
   },
 
   decrement: function() {
-    actions.decrement(this.props.offset);
+    decrement(this.props.offset);
   }
 
 });
-
-
-module.exports = MagicButton;

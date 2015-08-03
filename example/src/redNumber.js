@@ -1,23 +1,18 @@
-var Store      = require('../../src/Store');
-var increment  = require('./actions').increment;
-var init       = require('./actions').init;
-var blueNumber = require('./blueNumber');
+import Store from '../../src/Store';
+import blueNumber from './blueNumber';
+import { init, decrement, increment } from './actions';
 
 
-module.exports = Store(function redNumber(on, dependOn) {
-  dependOn(blueNumber);
+// Matches blue number if blue number is increasing, else noop
+export default Store({
+  name: 'redNumber',
 
-  var value = 0;
+  state: 0,
 
-  on(init, function(val) {
-    value = val;
-  });
+  handlers: {
+    [init]: (state, val) => val,
+    [increment]: (state, offset) => blueNumber.state
+  },
 
-  on(increment, function(offset) {
-    value = blueNumber.value();
-  });
-
-  return {
-    value: function() { return value }
-  };
+  dependOn: blueNumber
 });

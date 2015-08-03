@@ -1,27 +1,17 @@
-var Store      = require('../../src/Store');
-var actions    = require('./actions');
-var blueNumber = require('./blueNumber');
-
-var init       = actions.init;
-var decrement  = actions.decrement;
-var increment  = actions.increment;
+import ActorStore from '../../src/ActorStore';
+import { init, decrement, increment } from './actions';
+import blueNumber from './blueNumber';
 
 
-module.exports = Store(function greenNumber(on) {
-
+// Here, ActorStore is used to compute a derived state; A stateless Store wouldn't do the job.
+module.exports = ActorStore(function greenNumber(on) {
   var currentOffset = 0;
 
   on(init);
-
-  on(decrement, function(offset) {
-    currentOffset -= (10 * offset);
-  });
-
-  on(increment, function(offset) {
-    currentOffset += (10 * offset);
-  });
+  on(decrement, offset => currentOffset -= (10 * offset));
+  on(increment, offset => currentOffset += (10 * offset));
 
   return {
-    value: function() { return blueNumber.value() + currentOffset }
+    value: function() { return blueNumber.state + currentOffset }
   };
 });
