@@ -7,6 +7,7 @@ var id = 1;
 
 /**
 * Creates an unique action for a name.
+* The name is only here for debugging purposes, different actions can have the same name.
 * The action can then be used to dispatch a payload.
 *
 * Ex: 
@@ -21,6 +22,7 @@ function Action(name) {
   }
 
   action.id = id++;
+  action._name = name;
   action.toString = function() { return action.id };
   
   return action;

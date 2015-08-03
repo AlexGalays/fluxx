@@ -63,7 +63,7 @@ var dispatcher = (function() {
       'dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch.');
 
     if (dispatcher.log) {
-      console.log('%c' + action, 'color: #F51DE3', 'dispatched with payloads ', JSON.stringify(payloads));
+      console.log('%c' + action._name, 'color: #F51DE3', 'dispatched with payloads ', JSON.stringify(payloads));
       console.log('  handled by stores: ');
     }
 
