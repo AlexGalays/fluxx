@@ -3,7 +3,7 @@ import { init, decrement, increment } from './actions';
 
 
 export default Store({
-  name: 'blueNumber',
+  name: 'blue',
 
   state: 0,
 

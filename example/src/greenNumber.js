@@ -1,17 +1,15 @@
-import ActorStore from '../../src/ActorStore';
+import Store from '../../src/Store';
 import { init, decrement, increment } from './actions';
-import blueNumber from './blueNumber';
 
 
-// Here, ActorStore is used to compute a derived state; A stateless Store wouldn't do the job.
-module.exports = ActorStore(function greenNumber(on) {
-  var currentOffset = 0;
+export default Store({
+  name: 'green',
 
-  on(init);
-  on(decrement, offset => currentOffset -= (10 * offset));
-  on(increment, offset => currentOffset += (10 * offset));
+  state: 0,
 
-  return {
-    value: function() { return blueNumber.state + currentOffset }
-  };
+  handlers: {
+    [init]: (state, val) => val,
+    [increment]: (state, offset) => state + 10 * offset,
+    [decrement]: (state, offset) => state - 10 * offset
+  }
 });

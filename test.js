@@ -1,5 +1,5 @@
 var assert     = require('better-assert'),
-    fluxx      = require('./src/fluxx'),
+    fluxx      = require('../fluxx'),
     onChange   = fluxx.onChange,
     NO_CHANGE  = fluxx.NO_CHANGE,
     Store      = fluxx.Store,
@@ -8,7 +8,6 @@ var assert     = require('better-assert'),
 
 
 suite('fluxx', function() {
-
 
   test('Store', function() {
 

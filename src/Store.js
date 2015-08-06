@@ -1,23 +1,20 @@
-'use strict';
-
-
-var EventEmitter = require('events');
-var dispatcher   = require('./dispatcher');
+import EventEmitter from 'events';
+import dispatcher from './dispatcher';
 
 /**
 * Creates and register a new store.
 */
-function Store(options) {
+export default function Store(options) {
 
-  var handlers     = options.handlers,
-      name         = options.name,
-      dependencies = options.dependOn ? [].concat(options.dependOn) : [],
-      instance     = { state: options.state };
-
-  instance._emitter = new EventEmitter;
-  instance._name = name || '[no name]';
+  var { handlers, name, state, dependOn } = options;
+  var dependencies = dependOn ? [].concat(dependOn) : [];
+  var instance = { state };
 
   dispatcher.register(instance);
+
+  instance._emitter = new EventEmitter;
+  instance._name = name || `Store id=${instance._id}`;
+  instance._type = 'Store';
 
   instance._handleAction = function(action, payloads) {
     var handler = handlers[action.id];
@@ -37,6 +34,3 @@ function Store(options) {
 
   return instance;
 }
-
-
-module.exports = Store;

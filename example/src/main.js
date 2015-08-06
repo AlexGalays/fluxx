@@ -1,26 +1,25 @@
 import React from 'react';
 import fluxx from '../../src/fluxx';
-import blueNumber from './blueNumber';
-import greenNumber from './greenNumber';
-import redNumber from './redNumber';
+import Fluxx from '../../src/addon/ReactConnector';
+import blueStore from './blueNumber';
+import greenStore from './greenNumber';
+import redStore from './redNumber';
 import App from './App';
 import { init } from './actions';
 
 
-function render() {
-  console.log('render');
-
-  return React.render(
+React.render(
+  <Fluxx stores={[blueStore, greenStore, redStore]}>{ (blue, green, red) => 
     <App 
-      blueNumber={blueNumber.state} 
-      greenNumber={greenNumber.value()} 
-      redNumber={redNumber.state}/>,
+      blueNumber={blue}
+      greenNumber={green}
+      redNumber={red}/>
+  }
+  </Fluxx>,
 
-    document.querySelector('body')
-  );
-}
+  document.querySelector('body')
+);
 
-fluxx.onChange(blueNumber, greenNumber, redNumber)(render);
 
 fluxx.enableLogs();
 init(10);

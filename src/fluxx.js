@@ -1,14 +1,16 @@
-var dispatcher = require('./dispatcher');
+import dispatcher from './dispatcher';
+import Action from './Action';
+import Store from './Store';
+import ActorStore from './ActorStore';
+import onChange from './onChange';
+import NO_CHANGE from './noChange';
 
-module.exports = {
-  Action:     require('./Action'),
-  Store:      require('./Store'),
-  ActorStore: require('./ActorStore'),
-  onChange:   require('./onChange'),
+export default {
+  Action,
+  Store,
+  ActorStore,
+  onChange,
+  NO_CHANGE,
 
-  NO_CHANGE:  require('./noChange'),
-
-  enableLogs: function() {
-  	dispatcher.log = true;
-  }
+  enableLogs: () => dispatcher.log = true
 };

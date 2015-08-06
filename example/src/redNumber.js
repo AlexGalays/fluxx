@@ -5,7 +5,7 @@ import { init, decrement, increment } from './actions';
 
 // Matches blue number if blue number is increasing, else noop
 export default Store({
-  name: 'redNumber',
+  name: 'red',
 
   state: 0,
 

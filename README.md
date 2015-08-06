@@ -1,5 +1,5 @@
 
-# Fluxx
+![fluxx-logo](http://i171.photobucket.com/albums/u320/boubiyeah/photon_small_zps6sgduwbx.png)
 
 A straight to the point and efficient implementation of the [Facebook flux guidelines](http://facebook.github.io/flux/docs/overview.html).
 
@@ -9,17 +9,16 @@ The key elements are kept
 
 but there is far less boilerplate.  
 
-Coming soon: React adapters
-
 # Content
 * [Stores](#stores)
-  * [Simple Store](#store)
+  * [Store](#store)
   * [ActorStore](#actorStore)
     * [Defining a store and its actions](#storeAndActions)
     * [Depending on another store](#dependOn)
     * [Preventing the changed event from being dispatched](#preventChangeEvent)
     * [State machine](#stateMachine)
 * [Manually redrawing the view on store change](#manualRedraw)
+* [React Connector](#reactConnector)
 * [Differences with the Facebook implementation](#facebookImplementation)
 * [Full example](#fullExample)
 
@@ -28,28 +27,35 @@ Coming soon: React adapters
 ## Stores
 
 There are two possible styles to create Stores in fluxx.  
-Choose the style you prefer, you can even mix the two styles in the same application.  
-As a rule of thumb, if you're using ES6, try to pick the simple `Store` as a default.  
+
+**Store**  
+As a rule of thumb, if you're using ES6 and a view layer with a rich component model (e.g `React`), try to pick the simple `Store` as a default. It's more functional and only manages one state datum. Any data transformation must occur outside the store as the store itself has no API.  
+
+**ActorStore**  
+On the other hand, `ActorStore` might be more suited when using near-stateless view layers (e.g `virtual-dom`) 
+where a richer OO Store can help compensate the statelessness of the view.
+
 
 <a name="store"></a>
-### Simple Store
-
-`Store` has a more functional style but is a bit more limited     
+### Store
 
 ```javascript
-var { Store, Action } = require('fluxx');
-var otherStore = require('./otherStore');
+import { Store, Action } from 'fluxx';
+import otherStore from './otherStore';
 
 var action = Action.create('increment', 'decrement');
 
 var store = Store({
-  state: 0,
+  // The initial state
+  state: 0, 
 
+  // Action handlers transforming the state
   handlers: {
     [action.increment]: (state, by) => state + by,
     [action.decrement]: (state, by) => state - by
   },
 
+  // Store dependencies
   dependOn: otherStore
 });
 
@@ -62,11 +68,11 @@ console.log(store.state == 25);
 
 <a name="actorStore"></a>
 ### ActorStore
-`ActorStore` has a more Object Oriented style
+
 
 ```javascript
-var { ActorStore, Action } = require('fluxx');
-var otherStore = require('./otherStore');
+import { ActorStore, Action } from 'fluxx';
+import otherStore from'./otherStore';
 
 var action = Action.create('increment', 'decrement');
 
@@ -102,7 +108,7 @@ In any case, if you need to update a Store's state (usually a JSON-like tree) in
 <a name="storeAndActions"></a>
 ### Defining a Store and its Actions
 ```javascript
-var { ActorStore, Action } = require('fluxx');
+import { ActorStore, Action } from 'fluxx';
 
 var action = Action.create('init', 'increment', 'decrement');
 
@@ -166,7 +172,7 @@ ActorStore(function(on) {
 
   var value = 0;
 
-  on(action.increment, function() {
+  on(action.increment, () => {
     if (value < 100) value++;
     else return NO_CHANGE;
   });
@@ -212,7 +218,6 @@ push();
 
 ```
 
-
 <a name="manualRedraw"></a>
 ## Manually redrawing the view on store change
 ```javascript
@@ -233,6 +238,41 @@ action.increment(33);
 
 ``` 
 
+<a name="reactConnector"></a>
+## React connector
+
+When using `React` and `Store`, you can wrap a component in a Connector for it to be automatically redrawn when 
+an Array of stores changes.  
+Note: `ReactConnector` only understand `Store` instances; It's also quite opinionated and won't redraw its children if all the Store's states are still stricly equal to their previous values (to discourage in-place mutations).   
+At this time, it is not possible to dynamically change the Store array.
+
+```javascript
+import Fluxx from 'fluxx/addon/ReactConnector';
+import store1 from './store1';
+import store2 from './store2';
+import MyComp from './myComponent';
+
+var instance = (
+  <Fluxx stores={[store1, store2]}>{ (one, two) =>
+    <MyComp 
+      propOne={one}
+      propTwo={two} 
+    />
+  }
+  </Fluxx>
+);
+
+// Or
+
+var instance = (
+  <Fluxx stores={[store1, store2]}>
+    <MyComp/>
+  </Fluxx>
+);
+
+```
+
+
 <a name="facebookImplementation"></a>
 ## Differences with the Facebook implementation
 
@@ -246,8 +286,12 @@ action.increment(33);
 
 ```javascript
 dispatcher.waitFor([store1.dispatchToken, store2.dispatchToken])
+
 // Becomes
-dependOn(store1, store2)
+
+dependOn: [store1, store2] // Store
+// or
+dependOn(store1, store2) // ActorStore
 ```
 
 - Use closure-style modules instead of clumsy pseudo/es6 classes
@@ -257,7 +301,18 @@ dependOn(store1, store2)
 ## Enabling logging
 
 This will log all action dispatching along with the list of stores that handled the action.  
-Note: For easier debugging, give proper names to your stores, e.g `var store = Store(function someName() {})`
+Note: For easier debugging, give proper names to your stores, e.g:  
+
+
+```javascript
+var store = Store({ name: 'myStore' });
+```
+
+Or
+
+```javascript
+var store = ActorStore(function someName() {})
+```
 
 ```javascript
 var fluxx = require('fluxx');
@@ -273,5 +328,5 @@ fluxx.enableLogs();
 
 ## Running the tests
 ```
-mocha --ui tdd
+npm run test
 ```

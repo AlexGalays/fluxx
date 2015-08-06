@@ -1,12 +1,10 @@
-'use strict';
-
-var EventEmitter = require('events');
+import EventEmitter from 'events';
 
 /**
 * Singleton dispatcher used to broadcast action payloads to stores. You do not use this module directly.
 * Ensures the application state stored in the stores is updated predictably.
 */
-var dispatcher = (function() {
+export default (function() {
 
   var dispatching = false;
   var storeId = 0;
@@ -34,9 +32,7 @@ var dispatcher = (function() {
     delete stores[store._id];
   }
 
-  function waitFor() {
-    var storeDeps = arguments;
-
+  function waitFor(...storeDeps) {
     if (!dispatching) throw new Error(
       'dispatcher.waitFor(...): Must be invoked while dispatching.');
 
@@ -122,6 +118,3 @@ var dispatcher = (function() {
 
   return dispatcher;
 })();
-
-
-module.exports = dispatcher;

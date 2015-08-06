@@ -15,7 +15,5 @@
     "build": "NODE_ENV=production browserify src/main.js > bundle.js"
   },
 
-  "browserify": {
-    "transform": ["babelify"]
-  }
+  "browserify": { "transform": ["babelify"] }
 }

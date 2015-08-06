@@ -6,6 +6,8 @@ import MagicButton from './MagicButton';
 export default React.createClass({
 
   render: function() {
+    console.log('render');
+
     return (
       <div>
         <MagicButton />

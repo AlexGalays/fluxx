@@ -1,14 +1,11 @@
-'use strict';
-
-
-var EventEmitter = require('events');
-var dispatcher   = require('./dispatcher');
-var NO_CHANGE    = require('./noChange');
+import EventEmitter from 'events';
+import dispatcher from './dispatcher';
+import NO_CHANGE from './noChange';
 
 /**
 * Creates and register a new Actor store.
 */
-function ActorStore(factory) {
+export default function ActorStore(factory) {
   var handlerGroups = [{}],
       currentWhenHandlers,
       dependencies = [];
@@ -18,8 +15,8 @@ function ActorStore(factory) {
     handlers[action.id] = handler;
   }
 
-  function dependOn() {
-    dependencies = [].slice.call(arguments);
+  function dependOn(...stores) {
+    dependencies = stores;
   }
 
   function when(condition, registrationFn) {
@@ -30,14 +27,17 @@ function ActorStore(factory) {
   }
 
   var instance = factory(on, dependOn, when) || {};
-  instance._emitter = new EventEmitter;
-  instance._name = factory.name || '[no name]';
 
   dispatcher.register(instance);
 
+  instance._emitter = new EventEmitter;
+  instance._name = factory.name || `ActorStore id=${instance._id}`;
+  instance._type = 'ActorStore';
+
+
   instance._handleAction = function(action, payloads) {
 
-    var groups = handlerGroups.filter(function(group) {
+    var groups = handlerGroups.filter(group => {
       // This group does not handle that action
       if (!(action.id in group)) return false;
 
@@ -49,7 +49,7 @@ function ActorStore(factory) {
 
     if (!groups.length) return;
 
-    var changed = groups.reduce(function(changed, group) {
+    var changed = groups.reduce((changed, group) => {
       var handler = group[action.id];
       var handlerResult;
 
@@ -77,6 +77,3 @@ function ActorStore(factory) {
 
   return instance;
 }
-
-
-module.exports = ActorStore;

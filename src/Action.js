@@ -1,6 +1,4 @@
-'use strict';
-
-var dispatcher = require('./dispatcher');
+import dispatcher from './dispatcher';
 
 
 var id = 1;
@@ -14,7 +12,7 @@ var id = 1;
 * var ClickThread = Action('clickThread'); // Create the action once
 * ClickThread(id); // Dispatch a payload any number of times
 */
-function Action(name) {
+export default function Action(name) {
 
   function action() {
     var payloads = [].slice.call(arguments);
@@ -33,11 +31,8 @@ function Action(name) {
 * var actions = Action.create('clickThread', 'scroll');
 */
 Action.create = function() {
-  return [].slice.call(arguments).reduce(function(obj, name) {
+  return [].slice.call(arguments).reduce((obj, name) => {
     obj[name] = Action(name);
     return obj;
   }, {});
 };
-
-
-module.exports = Action;
