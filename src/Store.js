@@ -6,9 +6,9 @@ import dispatcher from './dispatcher';
 */
 export default function Store(options) {
 
-  var { handlers, name, state, dependOn } = options;
-  var dependencies = dependOn ? [].concat(dependOn) : [];
-  var instance = { state };
+  let { handlers, name, state, dependOn } = options;
+  let dependencies = dependOn ? [].concat(dependOn) : [];
+  let instance = { state };
 
   dispatcher.register(instance);
 
@@ -17,7 +17,7 @@ export default function Store(options) {
   instance._type = 'Store';
 
   instance._handleAction = function(action, payloads) {
-    var handler = handlers[action.id];
+    let handler = handlers[action.id];
     if (!handler) return;
 
     dispatcher.waitFor.apply(null, dependencies);

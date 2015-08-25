@@ -7,7 +7,7 @@ import dispatcher from './dispatcher';
 export default function(...stores) {
   // curried, to separate the stores from the callback.
   return function(callback) {
-    var count = 0;
+    let count = 0;
 
     function inc() { count += 1 }
     function started() { count = 0 }

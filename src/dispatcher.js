@@ -6,17 +6,17 @@ import EventEmitter from 'events';
 */
 export default (function() {
 
-  var dispatching = false;
-  var storeId = 0;
+  let dispatching = false;
+  let storeId = 0;
 
-  var stores = {};
-  var isPending = {};
-  var isHandled = {};
+  let stores = {};
+  let isPending = {};
+  let isHandled = {};
 
-  var currentAction = null;
-  var currentPayload = null;
+  let currentAction = null;
+  let currentPayload = null;
 
-  var dispatcher = Object.create(new EventEmitter);
+  let dispatcher = Object.create(new EventEmitter);
 
 
   function register(store) {
@@ -36,9 +36,9 @@ export default (function() {
     if (!dispatching) throw new Error(
       'dispatcher.waitFor(...): Must be invoked while dispatching.');
 
-    for (var i = 0; i < storeDeps.length; i++) {
-      var store = storeDeps[i];
-      var id = store._id;
+    for (let i = 0; i < storeDeps.length; i++) {
+      let store = storeDeps[i];
+      let id = store._id;
 
       if (isPending[id]) {
         if (!isHandled[id]) throw new Error(
@@ -69,7 +69,7 @@ export default (function() {
     startDispatching();
 
     try {
-      for (var id in stores) {
+      for (let id in stores) {
         if (isPending[id]) continue;
         notifyStore(id);
       }
@@ -82,7 +82,7 @@ export default (function() {
   function startDispatching() {
     dispatching = true;
 
-    for (var id in stores) {
+    for (let id in stores) {
       isPending[id] = false;
       isHandled[id] = false;
     }
@@ -100,11 +100,11 @@ export default (function() {
   function notifyStore(id) {
     isPending[id] = true;
 
-    var store = stores[id];
-    var result = store._handleAction(currentAction, currentPayload);
+    let store = stores[id];
+    let result = store._handleAction(currentAction, currentPayload);
 
     if (dispatcher.log && result !== undefined) {
-      var updateMsg = (result === false) ? '(did not update its UI state)' : '';
+      let updateMsg = (result === false) ? '(did not update its UI state)' : '';
       console.log('    %c' + store._name, 'color: blue', updateMsg);
     }
 

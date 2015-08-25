@@ -247,7 +247,7 @@ Note: `ReactConnector` only understand `Store` instances; It's also quite opinio
 At this time, it is not possible to dynamically change the Store array.
 
 ```javascript
-import Fluxx from 'fluxx/addon/ReactConnector';
+import Fluxx from 'fluxx/lib/ReactConnector';
 import store1 from './store1';
 import store2 from './store2';
 import MyComp from './myComponent';

@@ -1,7 +1,7 @@
 import dispatcher from './dispatcher';
 
 
-var id = 1;
+let id = 1;
 
 /**
 * Creates an unique action for a name.
@@ -15,7 +15,7 @@ var id = 1;
 export default function Action(name) {
 
   function action() {
-    var payloads = [].slice.call(arguments);
+    let payloads = [].slice.call(arguments);
     dispatcher.dispatch(action, payloads);
   }
 

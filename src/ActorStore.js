@@ -6,12 +6,12 @@ import NO_CHANGE from './noChange';
 * Creates and register a new Actor store.
 */
 export default function ActorStore(factory) {
-  var handlerGroups = [{}],
+  let handlerGroups = [{}],
       currentWhenHandlers,
       dependencies = [];
 
   function on(action, handler) {
-    var handlers = currentWhenHandlers || handlerGroups[0];
+    let handlers = currentWhenHandlers || handlerGroups[0];
     handlers[action.id] = handler;
   }
 
@@ -26,7 +26,7 @@ export default function ActorStore(factory) {
     currentWhenHandlers = null;
   }
 
-  var instance = factory(on, dependOn, when) || {};
+  let instance = factory(on, dependOn, when) || {};
 
   dispatcher.register(instance);
 
@@ -37,7 +37,7 @@ export default function ActorStore(factory) {
 
   instance._handleAction = function(action, payloads) {
 
-    var groups = handlerGroups.filter(group => {
+    let groups = handlerGroups.filter(group => {
       // This group does not handle that action
       if (!(action.id in group)) return false;
 
@@ -49,9 +49,9 @@ export default function ActorStore(factory) {
 
     if (!groups.length) return;
 
-    var changed = groups.reduce((changed, group) => {
-      var handler = group[action.id];
-      var handlerResult;
+    let changed = groups.reduce((changed, group) => {
+      let handler = group[action.id];
+      let handlerResult;
 
       // handlers are optional
       if (handler) {
