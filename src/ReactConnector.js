@@ -1,5 +1,5 @@
 import React from 'react';
-import { onChange } from '../fluxx';
+import { onChange } from './fluxx';
 
 /* Wraps and render a Component when at least one Store changes */
 

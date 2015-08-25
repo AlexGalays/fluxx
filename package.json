@@ -1,6 +1,6 @@
 {
   "name": "fluxx",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "main": "lib/fluxx",
   "description": "Facebook flux-like Store, Action",
   "keywords": ["flux", "facebook", "dispatcher", "store", "action", "reactive", "unidirectional"],
