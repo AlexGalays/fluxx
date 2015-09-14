@@ -59,7 +59,15 @@ export default (function() {
       'dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch.');
 
     if (dispatcher.log) {
-      console.log('%c' + action._name, 'color: #F51DE3', 'dispatched with payloads ', JSON.stringify(payloads));
+      let msg;
+      try {
+        msg = JSON.stringify(payloads);
+      }
+      catch(e) {
+        msg = payloads;
+      }
+
+      console.log('%c' + action._name, 'color: #F51DE3', 'dispatched with payloads ', msg);
       console.log('  handled by stores: ');
     }
 
