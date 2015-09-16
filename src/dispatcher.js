@@ -59,13 +59,7 @@ export default (function() {
       'dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch.');
 
     if (dispatcher.log) {
-      let msg;
-      try {
-        msg = JSON.stringify(payloads);
-      }
-      catch(e) {
-        msg = payloads;
-      }
+      let msg = tryStringify(payloads);
 
       console.log('%c' + action._name, 'color: #F51DE3', 'dispatched with payloads ', msg);
       console.log('  handled by stores: ');
@@ -112,8 +106,9 @@ export default (function() {
     let result = store._handleAction(currentAction, currentPayload);
 
     if (dispatcher.log && result !== undefined) {
+      let newState = store._type == 'Store' ? `New state: ${tryStringify(store.state)}` : '';
       let updateMsg = (result === false) ? '(did not update its UI state)' : '';
-      console.log('    %c' + store._name, 'color: blue', updateMsg);
+      console.log('    %c' + store._name, 'color: blue', updateMsg, newState);
     }
 
     isHandled[id] = true;
@@ -126,3 +121,8 @@ export default (function() {
 
   return dispatcher;
 })();
+
+function tryStringify(obj) {
+  try { return JSON.stringify(obj) }
+  catch (e) { return obj; }
+}
