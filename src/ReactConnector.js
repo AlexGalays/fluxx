@@ -14,12 +14,6 @@ export default React.createClass({
     this.unsub();
   },
 
-  shouldComponentUpdate: function(nextProps, nextState) {
-    return nextProps.stores.some((store, index) =>
-      store.state !== this._states[index]
-    );
-  },
-
   render: function() {
     let children = this.props.children;
     this._states = this.props.stores.map(store => store.state);
