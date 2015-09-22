@@ -243,7 +243,7 @@ action.increment(33);
 
 When using `React` and `Store`, you can wrap a component in a Connector for it to be automatically redrawn when 
 an Array of stores changes.  
-Note: `ReactConnector` only understand `Store` instances; It's also quite opinionated and won't redraw its children if all the Store's states are still stricly equal to their previous values (to discourage in-place mutations).   
+Note: `ReactConnector` only understand `Store` instances (and not `ActorStore` instances)   
 At this time, it is not possible to dynamically change the Store array.
 
 ```javascript
@@ -262,15 +262,28 @@ var instance = (
   </Fluxx>
 );
 
-// Or
+// Or, with inlined components
 
 var instance = (
-  <Fluxx stores={[store1, store2]}>
-    <MyComp/>
+  <Fluxx stores={[store1, store2]}>{ (one, two) =>
+    <div>
+      <input value={one} />
+      <input value={two} />
+    </div>
+  }
   </Fluxx>
 );
-
 ```
+
+
+### Example of a typical component hierarchy using fluxx
+
+![react-connector-diagram](http://i171.photobucket.com/albums/u320/boubiyeah/Screen%20Shot%202015-09-22%20at%2016.01.09_zpsf5pye1bj.png)
+
+- ReactConnector listens to one or more stores and render its child component when the store changes
+- The top level component is only here to please React, who requires a single component to be returned from `render`
+- The dumb components only take props as input. They can dispatch an action to update the proper store(s)
+- Of course, it is possible to reproduce this hierarchy in a nested fashion; The store basically replace the `state` of the `smart` components.
 
 
 <a name="facebookImplementation"></a>
