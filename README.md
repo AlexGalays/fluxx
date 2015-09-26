@@ -331,6 +331,10 @@ var store = ActorStore(function someName() {})
 var fluxx = require('fluxx');
 
 fluxx.enableLogs();
+// Or
+fluxx.enableLogs('v'); // Logs Action payloads as JSON
+// Or
+fluxx.enableLogs('vv'); // Logs Action payloads and Store states as JSON
 ```
 
 <a name="fullExample"></a>

@@ -12,5 +12,5 @@ export default {
   onChange,
   NO_CHANGE,
 
-  enableLogs: () => dispatcher.log = true
+  enableLogs: verbosity => dispatcher.log = (verbosity || true)
 };

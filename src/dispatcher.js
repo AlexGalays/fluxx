@@ -59,7 +59,7 @@ export default (function() {
       'dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch.');
 
     if (dispatcher.log) {
-      let msg = tryStringify(payloads);
+      let msg = logVerbosity() > 0 ? tryStringify(payloads) : payloads;
 
       console.log('%c' + action._name, 'color: #F51DE3', 'dispatched with payloads ', msg);
       console.log('  handled by stores: ');
@@ -106,12 +106,18 @@ export default (function() {
     let result = store._handleAction(currentAction, currentPayload);
 
     if (dispatcher.log && result !== undefined) {
-      let newState = store._type == 'Store' ? `New state: ${tryStringify(store.state)}` : '';
-      let updateMsg = (result === false) ? '(did not update its UI state)' : '';
+      let updateMsg = (result === false)       ? '(did not update its UI state)' :
+                      (store._type == 'Store') ? 'New state: ' : '';
+
+      let newState = logVerbosity() == 2 ? tryStringify(store.state) : store.state;
       console.log('    %c' + store._name, 'color: blue', updateMsg, newState);
     }
 
     isHandled[id] = true;
+  }
+
+  function logVerbosity() {
+    return dispatcher.log === true ? 0 : dispatcher.log.length;
   }
 
   dispatcher.register = register;
@@ -122,7 +128,8 @@ export default (function() {
   return dispatcher;
 })();
 
+
 function tryStringify(obj) {
-  try { return JSON.stringify(obj) }
+  try { return JSON.stringify(obj, null, 2) }
   catch (e) { return obj; }
 }
