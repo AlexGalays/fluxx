@@ -20,7 +20,7 @@
   },
 
   "peerDependencies": {
-    "react": "0.14.0-rc1"
+    "react": "0.14.0"
   },
 
   "devDependencies": {
