@@ -18,9 +18,7 @@ export default React.createClass({
     let children = this.props.children;
     this._states = this.props.stores.map(store => store.state);
 
-    return typeof children == 'function'
-      ? children.apply(null, this._states)
-      : children;
+    return children.apply(null, this._states);
   }
 
 });
