@@ -18,6 +18,7 @@ but there is far less boilerplate.
     * [Preventing the changed event from being dispatched](#preventChangeEvent)
     * [State machine](#stateMachine)
 * [Manually redrawing the view on store change](#manualRedraw)
+* [Async actions](#asyncActions)
 * [React Connector](#reactConnector)
 * [Differences with the Facebook implementation](#facebookImplementation)
 * [Full example](#fullExample)
@@ -237,6 +238,35 @@ function render() {
 action.increment(33);
 
 ``` 
+<a name="asyncActions"></a>
+## Async actions
+
+Fluxx don't have these as they are not nessesary.  
+As an example, here's a suggestion of how one could structure her code performing ajax calls:  
+
+```javascript
+
+/* saveTodo.js */
+
+import { savingTodo, todoSaved, todoSaveFailed } from './actions';
+
+export default function(todo) {
+  // Tell store(s) we're about to attempt persisting a new todo on the server.
+  // Could be used to optimistically add the todo on screen and/or show a progress indicator
+  savingTodo(todo);
+
+  fetch('/todos', { method: 'post', body: todo })
+    // Tell store(s) the todo was successfully saved: Remove the progress indicator
+    .then(res => todoSaved(todo))
+    // Tell store(s) there was an error while saving the todo, mark the todo as local only, display errors, offer retry, etc.
+    .catch(err => todoSaveFailed(todo));
+}
+
+/* ------------------------ */
+```
+
+The ajax call could also be made directly from the View depending on your testing needs (or lack thereof). The saving/saved/error state could sometimes be local to a component.
+
 
 <a name="reactConnector"></a>
 ## React connector
