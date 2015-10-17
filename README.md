@@ -107,7 +107,7 @@ In any case, if you need to update a Store's state (usually a JSON-like tree) in
 
 
 <a name="storeAndActions"></a>
-### Defining a Store and its Actions
+### Actor Store: Defining a Store and its Actions
 ```javascript
 import { ActorStore, Action } from 'fluxx';
 
@@ -134,7 +134,7 @@ export { store, action };
 ```
 
 <a name="dependOn"></a>
-### Depending on another store
+### Actor Store: Depending on another store
 
 ```javascript
 import { ActorStore } from 'fluxx';
@@ -162,7 +162,7 @@ var derivedValueStore = ActorStore(function(on, dependOn) {
 ```
 
 <a name="preventChangeEvent"></a>
-### Preventing the `changed` event from being dispatched
+### Actor Store: Preventing the `changed` event from being dispatched
 
 As an optimization, an action handler can return `NO_CHANGE` to tell the dispatcher this store's state didn't actually change.
 
@@ -188,7 +188,7 @@ ActorStore(function(on) {
 ```
 
 <a name="stateMachine"></a>
-### State machine
+### Actor Store: State machine
 
 ```javascript
 import { ActorStore, Action } from 'fluxx';
@@ -261,8 +261,6 @@ export default function(todo) {
     // Tell store(s) there was an error while saving the todo, mark the todo as local only, display errors, offer retry, etc.
     .catch(err => todoSaveFailed(todo));
 }
-
-/* ------------------------ */
 ```
 
 The ajax call could also be made directly from the View depending on your testing needs (or lack thereof). The saving/saved/error state could sometimes be local to a component.
