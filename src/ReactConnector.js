@@ -6,8 +6,10 @@ import { onChange } from './fluxx';
 export default React.createClass({
 
   componentWillMount: function() {
-    let stores = this.props.stores;
-    this.unsub = onChange.apply(null, stores)(_ => this.setState({}));
+    this.stores = this.props.stores.map(store =>
+      (typeof store == 'function') ? store(this.props) : store);
+
+    this.unsub = onChange.apply(null, this.stores)(_ => this.setState({}));
   },
 
   componentWillUnmount: function() {
@@ -16,9 +18,9 @@ export default React.createClass({
 
   render: function() {
     let children = this.props.children;
-    this._states = this.props.stores.map(store => store.state);
+    let states = this.stores.map(store => store.state);
 
-    return children.apply(null, this._states);
+    return children.apply(null, states);
   }
 
 });

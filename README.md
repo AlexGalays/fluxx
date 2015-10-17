@@ -304,7 +304,26 @@ var instance = (
   </Fluxx>
 );
 ```
+A store factory (A function that returns a store instance) can also be passed.  
+This is useful when the store should be (re)initialized everytime the component is mounted (as opposed to permanent, top level stores sitting in memory)
 
+```javascript
+import Fluxx from 'fluxx/lib/ReactConnector';
+import store1 from './store1';
+import createStore2 from './store2';
+import MyComp from './myComponent';
+
+// A `store2` instance is created everytime the Fluxx component is mounted.
+var instance = (
+  <Fluxx stores={[store1, createStore2]}>{ (one, two) =>
+    <MyComp
+      propOne={one}
+      propTwo={two}
+    />
+  }
+  </Fluxx>
+);
+```
 
 ### Example of a typical component hierarchy using fluxx
 
