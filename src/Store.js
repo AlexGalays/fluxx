@@ -21,7 +21,7 @@ export default function Store(options) {
     if (!handler) return;
 
     dispatcher.waitFor.apply(null, dependencies);
-    instance.state = handler.apply(null, [].concat(instance.state).concat(payloads));
+    instance.state = handler.apply(null, [instance.state].concat(payloads));
 
     instance._emitter.emit('changed');
 

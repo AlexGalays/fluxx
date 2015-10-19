@@ -7,6 +7,8 @@ var assert     = require('better-assert'),
     Action     = fluxx.Action;
 
 
+//fluxx.enableLogs();
+
 suite('fluxx', function() {
 
   test('Store', function() {
@@ -79,6 +81,33 @@ suite('fluxx', function() {
     store2.unregister();
     action.increment(0);
     assert(fired == 4);
+  });
+
+
+  test('Store with an Array state', function() {
+    var action = Action.create('init', 'push');
+
+    function makeStore() {
+      var handlers = {};
+
+      handlers[action.init] = function() { return [] };
+      handlers[action.push] = function(arr, item) {
+        var clone = arr.slice();
+        clone.push(item);
+        return clone;
+      };
+
+      return Store({
+        handlers: handlers
+      });
+    }
+
+    var store = makeStore();
+    action.init();
+    action.push([1, 2, 3]);
+
+    assert(store.state.length == 1);
+    assert(store.state[0].length == 3);
   });
 
 
