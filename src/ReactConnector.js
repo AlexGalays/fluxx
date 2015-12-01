@@ -5,18 +5,25 @@ import { onChange } from './fluxx';
 
 export default React.createClass({
 
-  componentWillMount: function() {
-    this.stores = this.props.stores.map(store =>
-      (typeof store == 'function') ? store(this.props) : store);
+  componentWillMount() {
+    const storeList = this.props.stores;
 
-    this.unsub = onChange.apply(null, this.stores)(_ => this.setState({}));
+    this.stores = storeList.map(store => isFunction(store) ? store(this.props) : store);
+
+    const unsub = onChange.apply(null, this.stores)(_ => this.setState({}));
+
+    this.onUnmount = function() {
+      unsub();
+      // Also destroy (transient) stores that were created from factories
+      storeList.filter(isFunction).forEach((_, i) => this.stores[i].unregister());
+    };
   },
 
-  componentWillUnmount: function() {
-    this.unsub();
+  componentWillUnmount() {
+    this.onUnmount();
   },
 
-  render: function() {
+  render() {
     let children = this.props.children;
     let states = this.stores.map(store => store.state);
 
@@ -24,3 +31,7 @@ export default React.createClass({
   }
 
 });
+
+function isFunction(store) {
+  return typeof store === 'function';
+}
