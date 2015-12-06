@@ -34,3 +34,6 @@ export default function Store(options) {
 
   return instance;
 }
+
+
+Store.byName = dispatcher.getRegisteredStoreByName;

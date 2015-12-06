@@ -16,7 +16,7 @@ suite('fluxx', function() {
     var fired = 0;
     var action = Action.create('increment', 'decrement', 'noop', 'ignored');
 
-    function makeStore() {
+    function makeStore(name) {
       var handlers = {};
 
       handlers[action.increment] = function(counter, by) { return counter + by };
@@ -25,6 +25,7 @@ suite('fluxx', function() {
 
       return Store({
         state: 0,
+        name: name,
         handlers: handlers
       });
     }
@@ -33,10 +34,14 @@ suite('fluxx', function() {
       fired++;
     }
 
-    var store1 = makeStore();
-    var store2 = makeStore();
+    var store1 = makeStore('store1');
+    var store2 = makeStore('store2');
 
     var unsub = onChange(store1, store2)(log);
+
+    assert(Store.byName('store1') === store1);
+    assert(Store.byName('store2') === store2);
+    assert(Store.byName('store3') === undefined);
 
     action.increment(10);
 
@@ -78,6 +83,10 @@ suite('fluxx', function() {
     assert(fired == 4);
 
     store1.unregister();
+
+    assert(Store.byName('store1') === undefined);
+    assert(Store.byName('store2') === store2);
+
     store2.unregister();
     action.increment(0);
     assert(fired == 4);

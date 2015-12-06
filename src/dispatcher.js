@@ -116,6 +116,12 @@ export default (function() {
     isHandled[id] = true;
   }
 
+  function getRegisteredStoreByName(name) {
+    for (let id in stores) {
+      if (stores[id]._name == name) return stores[id];
+    }
+  }
+
   function logVerbosity() {
     return dispatcher.log === true ? 0 : dispatcher.log.length;
   }
@@ -124,6 +130,7 @@ export default (function() {
   dispatcher.unregister = unregister;
   dispatcher.waitFor = waitFor;
   dispatcher.dispatch = dispatch;
+  dispatcher.getRegisteredStoreByName = getRegisteredStoreByName;
 
   return dispatcher;
 })();

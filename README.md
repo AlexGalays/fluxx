@@ -17,6 +17,7 @@ but there is far less boilerplate.
     * [Depending on another store](#dependOn)
     * [Preventing the changed event from being dispatched](#preventChangeEvent)
     * [State machine](#stateMachine)
+  * [Store API](#storeAPI)
 * [Manually redrawing the view on store change](#manualRedraw)
 * [Async actions](#asyncActions)
 * [React Connector](#reactConnector)
@@ -30,7 +31,7 @@ but there is far less boilerplate.
 There are two possible styles to create Stores in fluxx.  
 
 **Store**  
-As a rule of thumb, if you're using ES6 and a view layer with a rich component model (e.g `React`), try to pick the simple `Store` as a default. It's more functional and only manages one state datum. Any data transformation must occur outside the store as the store itself has no API.  
+As a rule of thumb, if you're using ES6 and a view layer with a rich component model (e.g `React`), try to pick the simple `Store` as a default. It's more functional and only manages one state datum. Any data transformation must occur outside the store as the store itself has no user-defined API.  
 
 **ActorStore**  
 On the other hand, `ActorStore` might be more suited when using near-stateless view layers (e.g `virtual-dom`) 
@@ -218,6 +219,18 @@ coin();
 push();
 
 ```
+
+<a name="storeAPI"></a>
+## Store API
+
+### `store.unregister()`
+
+Calling `unregister` on a store instance will unregister the store from the central dispatcher and (if you have no other references to it) make it elligible for GC. 
+
+### `Store.byName(name: string): Store | undefined`
+
+Try to find and return a currently registered store that has the given user-defined name.
+
 
 <a name="manualRedraw"></a>
 ## Manually redrawing the view on store change
