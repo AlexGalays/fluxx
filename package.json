@@ -1,9 +1,10 @@
 {
   "name": "fluxx",
-  "version": "0.12.5",
+  "version": "0.13.0",
   "main": "lib/fluxx",
-  "description": "Facebook flux-like Store, Action",
-  "keywords": ["flux", "facebook", "dispatcher", "store", "action", "reactive", "unidirectional", "concise", "mvc"],
+  "typings": "lib/fluxx.d.ts",
+  "description": "Terse application state management",
+  "keywords": ["flux", "facebook", "store", "action", "reactive", "unidirectional", "terse", "mvc", "typescript"],
   "homepage": "https://github.com/AlexGalays/fluxx/",
 
   "author": {
@@ -15,23 +16,22 @@
     "url": "https://github.com/AlexGalays/fluxx.git"
   },
 
-  "dependencies": {
-    "events": "1.0.2"
-  },
-
   "peerDependencies": {
     "react": "^0.14.0"
   },
 
   "devDependencies": {
-    "babel": "5.8.21",
+    "babel-cli": "6.4.5",
     "mocha-babel": "3.0.0",
     "mocha": "2.1.0",
-    "better-assert": "1.0.1"
+    "better-assert": "1.0.1",
+    "babel-preset-es2015-loose": "7.0.0",
+    "babel-preset-stage-2": "6.3.13"
   },
 
   "scripts": {
-    "build": "`npm bin`/babel src --out-dir lib",
+    "copy-typings": "cp typings/fluxx.d.ts lib && cp typings/ReactConnector.d.ts lib",
+    "build": "npm run copy-typings && node node_modules/babel-cli/bin/babel.js src --out-dir lib",
     "test": "npm run build && mocha --ui tdd"
   }
 }

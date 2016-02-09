@@ -1,260 +1,78 @@
 
 ![fluxx-logo](http://i171.photobucket.com/albums/u320/boubiyeah/photon_small_zps6sgduwbx.png)
 
-A straight to the point and efficient implementation of the [Facebook flux guidelines](http://facebook.github.io/flux/docs/overview.html).
-
-The key elements are kept
-- A central dispatcher enforcing the sequential/unidirectional flow
-- Stores can depend on other stores
-
-but there is far less boilerplate.  
+More akin to Redux than Facebook flux, `fluxx` lets you manage
+your application state in a terse, centralized and scalable way.  
+It also has first-class support for typescript.
 
 # Content
-* [Stores](#stores)
-  * [Store](#store)
-  * [ActorStore](#actorStore)
-    * [Defining a store and its actions](#storeAndActions)
-    * [Depending on another store](#dependOn)
-    * [Preventing the changed event from being dispatched](#preventChangeEvent)
-    * [State machine](#stateMachine)
-  * [Store API](#storeAPI)
+
+* [Store](#store)
 * [Manually redrawing the view on store change](#manualRedraw)
 * [Async actions](#asyncActions)
 * [React Connector](#reactConnector)
-* [Differences with the Facebook implementation](#facebookImplementation)
 * [Full example](#fullExample)
-
-
-<a name="stores"></a>
-## Stores
-
-There are two possible styles to create Stores in fluxx.  
-
-**Store**  
-As a rule of thumb, if you're using ES6 and a view layer with a rich component model (e.g `React`), try to pick the simple `Store` as a default. It's more functional and only manages one state datum. Any data transformation must occur outside the store as the store itself has no user-defined API.  
-
-**ActorStore**  
-On the other hand, `ActorStore` might be more suited when using near-stateless view layers (e.g `virtual-dom`) 
-where a richer OO Store can help compensate the statelessness of the view.
+* [Typescript store](#typescriptStore)
 
 
 <a name="store"></a>
-### Store
+## Store
 
 ```javascript
 import { Store, Action } from 'fluxx';
 import otherStore from './otherStore';
 
-var action = Action.create('increment', 'decrement');
+// The action names (passed in the Action factory) can be anything,
+// they're just here to help during debug (Store.log = true)
+const increment = Action('increment');
+const decrement = Action('decrement');
 
-var store = Store({
+const store = Store({
   // The initial state
-  state: 0, 
+  state: 0,
 
   // Action handlers transforming the state
   handlers: {
     [action.increment]: (state, by) => state + by,
     [action.decrement]: (state, by) => state - by
-  },
-
-  // Store dependencies
-  dependOn: otherStore
+  }
 });
 
 action.increment(30);
 action.decrement(5);
 
-console.log(store.state == 25);
-
-``` 
-
-<a name="actorStore"></a>
-### ActorStore
-
-
-```javascript
-import { ActorStore, Action } from 'fluxx';
-import otherStore from'./otherStore';
-
-var action = Action.create('increment', 'decrement');
-
-var store = ActorStore(function(on, dependOn) {
-  dependOn(otherStore);
-
-  // The store's private state; The store could have many of these.
-  var value = 0;
-
-  // When the store receives the init Action,
-  // initialize its initial state with the action's payload.
-  on(action.init, val => value = val);
-
-  on(action.decrement, offset => value -= offset);
-  on(action.increment, offset => value += offset);
-
-  // The store public API; Here we decided to only use functions (Uniform access principle)
-  // For convenience, the API can be rich and return various utility functions (`findById`, etc)
-  return {
-    value: () => value
-  };
-});
-
-action.increment(30);
-action.decrement(5);
-
-console.log(store.value() == 25);
-```
-
-In any case, if you need to update a Store's state (usually a JSON-like tree) in an immutable way, have a look at: [immupdate](https://github.com/AlexGalays/immupdate)  
-
-
-<a name="storeAndActions"></a>
-### Actor Store: Defining a Store and its Actions
-```javascript
-import { ActorStore, Action } from 'fluxx';
-
-var action = Action.create('init', 'increment', 'decrement');
-
-var store = ActorStore(function(on) {
-
-  var value = 0;
-
-  // When the store receives the init Action,
-  // initialize its initial state with the action's payload.
-  on(action.init, val => value = val);
-
-  on(action.decrement, offset => value -= offset);
-  on(action.increment, offset => value += offset);
-
-  // The store public API; Here we decided to only use functions (Uniform access principle)
-  return {
-    value: () => value
-  };
-});
-
-export { store, action };
-```
-
-<a name="dependOn"></a>
-### Actor Store: Depending on another store
-
-```javascript
-import { ActorStore } from 'fluxx';
-import { store, action } from './valueStore';
-
-var derivedValueStore = ActorStore(function(on, dependOn) {
-
-  /*
-   * This derived store depends on valueStore, meaning we let valueStore update its state before we do, for every action we listen to.
-   * However, this store will only dispatch change events for the actions it explicitly listens to.
-   */
-  dependOn(store);
-
-  // Not interested in the decrement action
-
-  on(action.increment);
-
-  // The store public API; this could return many util functions.
-  return {
-    value: () => store.value() * 2
-  };
-
-});
+console.log(store.state === 25);
 
 ```
 
 <a name="preventChangeEvent"></a>
-### Actor Store: Preventing the `changed` event from being dispatched
+### Preventing the store from dispatching the change event
 
-As an optimization, an action handler can return `NO_CHANGE` to tell the dispatcher this store's state didn't actually change.
-
-```javascript
-import { ActorStore, NO_CHANGE } from 'fluxx';
-
-ActorStore(function(on) {
-
-  var value = 0;
-
-  on(action.increment, () => {
-    if (value < 100) value++;
-    else return NO_CHANGE;
-  });
-
-  // The store public API; this could return many util functions.
-  return {
-    value: () => value
-  };
-
-});
-
-```
-
-<a name="stateMachine"></a>
-### Actor Store: State machine
-
-```javascript
-import { ActorStore, Action } from 'fluxx';
-
-var { push, coin } = Action.create('push', 'coin');
-
-ActorStore(function turnstile(on, _, when) {
-
-  var locked = true;
-
-  // Handler without a condition
-  on(push, _ => console.log('push'));
-
-  // Handlers valid only when the turnstile is locked
-  when(_ => locked, () => {
-    on(coin, _ => locked = false);
-  });
-
-  // Handlers valid only when the turnstile is unlocked
-  when(_ => !locked, () => {
-    on(push, _ => locked = true);
-  });
-
-});
-
-coin();
-push();
-
-```
-
-<a name="storeAPI"></a>
-## Store API
-
-### `store.unregister()`
-
-Calling `unregister` on a store instance will unregister the store from the central dispatcher and (if you have no other references to it) make it elligible for GC. 
-
-### `Store.byName(name: string): Store | undefined`
-
-Try to find and return a currently registered store that has the given user-defined name.
+Simply return the same state reference in the update handler and the store won't dispatch this event.
 
 
 <a name="manualRedraw"></a>
 ## Manually redrawing the view on store change
 ```javascript
 
-import { onChange } from 'fluxx';
 import { store, action } from './valueStore';
 
-// Render again whenever the store changes; `onChange` can take any number of stores as arguments.
-onChange(store)(render);
+// Render again whenever the store changes
+const unsubscribe = store.subscribe(render);
 
 function render() {
   console.log('render!');
-  // Actually render a component using React, virtual-dom, etc 
+  // Actually render a component using React, virtual-dom, etc
 }
 
 // Trigger the increment action: Increment store's value by 33
 action.increment(33);
 
-``` 
+```
 <a name="asyncActions"></a>
 ## Async actions
 
-Fluxx don't have these as they are not nessesary.  
+Fluxx don't have these as they are not necessary.  
 As an example, here's a suggestion of how one could structure her code performing ajax calls:  
 
 ```javascript
@@ -264,143 +82,178 @@ As an example, here's a suggestion of how one could structure her code performin
 import { savingTodo, todoSaved, todoSaveFailed } from './actions';
 
 export default function(todo) {
-  // Tell store(s) we're about to attempt persisting a new todo on the server.
+  // Tell the store we're about to attempt persisting a new todo on the server.
   // Could be used to optimistically add the todo on screen and/or show a progress indicator
   savingTodo(todo);
 
   fetch('/todos', { method: 'post', body: todo })
-    // Tell store(s) the todo was successfully saved: Remove the progress indicator
+    // Tell the store the todo was successfully saved: Remove the progress indicator
     .then(res => todoSaved(todo))
-    // Tell store(s) there was an error while saving the todo, mark the todo as local only, display errors, offer retry, etc.
+    // Tell the store there was an error while saving the todo, mark the todo as local only, display errors, offer retry, etc.
     .catch(err => todoSaveFailed(todo));
 }
 ```
 
-The ajax call could also be made directly from the View depending on your testing needs (or lack thereof). The saving/saved/error state could sometimes be local to a component.
-
-
 <a name="reactConnector"></a>
 ## React connector
 
-When using `React` and `Store`, you can wrap a component in a Connector for it to be automatically redrawn when 
-an Array of stores changes.  
-Note: `ReactConnector` only understand `Store` instances (and not `ActorStore` instances)   
-At this time, it is not possible to dynamically change the Store array.
+To use both `React` and `fluxx`, a connector add-on is provided to connect any component to the store.
+
+The connected component will only re-render when the store's datum of interest actually changed.
+This means you can not just mutate the store's state, its reference should change if it was actually updated.
+This is consistent with the various React practices needed to get good performances.
+
+If you wish to use basic Objects and Arrays as your store's state, you may want to check [immupdate](https://github.com/AlexGalays/immupdate).  
+
+Which components should be connected to the store? The answer is 'some of them'.  
+
+Too few connected components and you will have to write a lot of boilerplate to manually pass down props instead.
+Furthermore, you will suffer mild performance penalties as parents will 'update' simply because they need to pass
+some data to their children as props.  
+
+Too many connected components and the data flow becomes a bit harder to follow.  
+
+As a rule of thumb, connect at least the smart components managing a particular routing hierarchy, plus any heavily nested
+smart component that needs some data its parents don't.  
 
 ```javascript
-import Fluxx from 'fluxx/lib/ReactConnector';
-import store1 from './store1';
-import store2 from './store2';
-import MyComp from './myComponent';
+import connect from 'fluxx/lib/ReactConnector';
 
-var instance = (
-  <Fluxx stores={[store1, store2]}>{ (one, two) =>
-    <MyComp 
-      propOne={one}
-      propTwo={two} 
-    />
-  }
-  </Fluxx>
-);
+// Your store instance; also import an Action
+import store, { incrementBy } from './store';
 
-// Or, with inlined components
 
-var instance = (
-  <Fluxx stores={[store1, store2]}>{ (one, two) =>
-    <div>
-      <input value={one} />
-      <input value={two} />
-    </div>
-  }
-  </Fluxx>
-);
-```
-A store factory (A function that returns a store instance) can also be passed.  
-This is useful when the store should be (re)initialized everytime the component is mounted (as opposed to permanent, top level stores sitting in memory)
+class Blue extends React.Component {
+	render() {
+		const { count } = this.props;
 
-```javascript
-import Fluxx from 'fluxx/lib/ReactConnector';
-import store1 from './store1';
-import createStore2 from './store2';
-import MyComp from './myComponent';
+		return (
+      <p onClick={ incrementBy10 }>{ count }</p>
+		);
+	}
+};
 
-// A `store2` instance is created everytime the Fluxx component is mounted.
-var instance = (
-  <Fluxx stores={[store1, createStore2]}>{ (one, two) =>
-    <MyComp
-      propOne={one}
-      propTwo={two}
-    />
-  }
-  </Fluxx>
-);
+function incrementBy10() { incrementBy(10) }
+
+// Takes a component, the store instance and a function returning the slice of data we're interested in.
+export default connect(Blue, store, state => (
+	{ count: state.blue.count }
+));
+
 ```
 
-### Example of a typical component hierarchy using fluxx
-
-![react-connector-diagram](http://i171.photobucket.com/albums/u320/boubiyeah/Screen%20Shot%202015-09-22%20at%2016.01.09_zpsf5pye1bj.png)
-
-- ReactConnector listens to one or more stores and render its child component when the store changes
-- The top level component is only here to please React, who requires a single component to be returned from `render`
-- The dumb components only take props as input. They can dispatch an action to update the proper store(s)
-- Of course, it is possible to reproduce this hierarchy in a nested fashion; The store basically replace the `state` of the `smart` components.
-
-
-<a name="facebookImplementation"></a>
-## Differences with the Facebook implementation
-
-- The dispatcher is now an implementation detail. It is no longer needed to explicitly import it in your code. (The actions and stores use it behind the scene)
-
-- Provide a constructor for Stores. The examples encourage `switch/case/break` which is pretty poor style and error prone in JS or in most language; Instead, a list of action -> callback is used.
-
-- Provide a constructor for Actions. Actions instances can be used directly in stores: No need for tedious constants.
-
-- Simplified API: Removed boilerplate, got rid of dispatch tokens: Instead use store instances directly.
-
-```javascript
-dispatcher.waitFor([store1.dispatchToken, store2.dispatchToken])
-
-// Becomes
-
-dependOn: [store1, store2] // Store
-// or
-dependOn(store1, store2) // ActorStore
-```
-
-- Use closure-style modules instead of clumsy pseudo/es6 classes
-
-- Performance: `Store.onChange(store1, store2)` can be used to render a view only once when either store1 or store2 was updated during one dispatcher run. The Facebook examples call `render()` twice if two stores were updated, which is wasteful.
 
 ## Enabling logging
 
-This will log all action dispatching along with the list of stores that handled the action.  
-Note: For easier debugging, give proper names to your stores, e.g:  
-
+This will log all action dispatching along with the updated state of the store afterwards.
 
 ```javascript
-var store = Store({ name: 'myStore' });
-```
-
-Or
-
-```javascript
-var store = ActorStore(function someName() {})
-```
-
-```javascript
-var fluxx = require('fluxx');
-
-fluxx.enableLogs();
-// Or
-fluxx.enableLogs('v'); // Logs Action payloads as JSON
-// Or
-fluxx.enableLogs('vv'); // Logs Action payloads and Store states as JSON
+import { Store } from 'fluxx';
+Store.log = true;
 ```
 
 <a name="fullExample"></a>
 ## Full example
 
-[Here](example/src)
+Coming soon...
+
+<a name="typescriptStore"></a>
+### Typescript store
+
+fluxx has first class support for typescript. This means EVERYTHING will be type-safe!  
+However, to achieve that, a few changes are required compared to using fluxx with plain javascript:  
+
+Action declaration
+
+```javascript
+import { Action } from 'fluxx';
+
+// Declare an action that takes no argument
+export const increment = Action('increment');
+
+// Declare an action that takes an argument of type number.
+// It could of course be any custom type as well.
+export const incrementBy = Action<number>('incrementBy');
+```
+
+Store creation
+
+```javascript
+
+import { Store } from 'fluxx';
+import update from 'immupdate';
+
+interface State {
+  count: number,
+  somethingElse: string
+}
+
+const initialState = { count: 0, somethingElse: '' };
+
+
+function updateStore<P>(state: State, action: Action<P>): State {
+
+  if (action.is(incrementBy)) {
+    // Inside this block, action is now refined to an action dispatched by incrementBy
+    // This means action.value is of type number.
+    const { value } = action;
+    return update(state, { count: c => c + value });
+  }
+
+  return state;
+}
+
+// Create the actual store instance
+export default Store(initialState, updateStore);
+
+```
+
+Connecting a component to the store
+
+```javascript
+import connect from 'fluxx/lib/ReactConnector';
+
+// Your store instance; also import an Action
+import store, { incrementBy } from './store';
+
+// Declare the props our parent should give us
+interface ParentProps {
+	params: { id: string },
+	children: React.ReactElement<any>
+}
+
+// Declare our "own" props,
+// that is the store's slice of state that get injected to our props by connect.
+interface StoreProps {
+	count: number
+}
+
+// Our final props is the combination of the two prop sources.
+// Of course, it is not strictly required to split props in two interfaces.
+type Props = ParentProps & StoreProps;
+
+class Blue extends React.Component<Props, void> {
+	render() {
+
+    // Type safe deconstruction
+		const { count, params: { id } } = this.props;
+
+    return (
+      <p onClick={ incrementBy10 }>{ count }</p>
+		);
+	}
+};
+
+// Action dispatching is also type-safe: we could not pass anything other than a number here.
+function incrementBy10() { incrementBy(10) }
+
+
+export default connect(Blue, store, (state): StoreProps => (
+	{ count: state.count }
+));
+
+```
+
 
 
 ## Running the tests

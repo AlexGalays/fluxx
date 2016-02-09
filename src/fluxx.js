@@ -1,16 +1,6 @@
-import dispatcher from './dispatcher';
-import Action from './Action';
-import Store from './Store';
-import ActorStore from './ActorStore';
-import onChange from './onChange';
-import NO_CHANGE from './noChange';
 
-export default {
-  Action,
-  Store,
-  ActorStore,
-  onChange,
-  NO_CHANGE,
+import _Action from './Action';
+import _Store from './Store';
 
-  enableLogs: verbosity => dispatcher.log = (verbosity || true)
-};
+export const Store = _Store;
+export const Action = _Action;

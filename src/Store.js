@@ -1,39 +1,77 @@
-import EventEmitter from 'events';
-import dispatcher from './dispatcher';
 
 /**
-* Creates and register a new store.
+* Creates the store singleton.
 */
-export default function Store(options) {
+export default function Store(optionsOrInitialState, update) {
+  const { state, handlers } = update ? {} : optionsOrInitialState;
+  const initialState = update ? optionsOrInitialState : state;
 
-  let { handlers, name, state, dependOn } = options;
-  let dependencies = dependOn ? [].concat(dependOn) : [];
-  let instance = { state };
+  let dispatching = false;
+  let callbacks = [];
 
-  dispatcher.register(instance);
+  _instance = { state: initialState };
 
-  instance._emitter = new EventEmitter;
-  instance._name = name || `Store id=${instance._id}`;
-  instance._type = 'Store';
+  if (Store.log)
+    console.log('%cInitial state:', 'color: green', state);
 
-  instance._handleAction = function(action, payloads) {
-    let handler = handlers[action.id];
-    if (!handler) return;
+  _instance._handleAction = function(action, payloads) {
+    if (dispatching) throw new Error(
+      'Cannot dispatch an Action in the middle of another Action\'s dispatch');
 
-    dispatcher.waitFor.apply(null, dependencies);
-    instance.state = handler.apply(null, [instance.state].concat(payloads));
+    dispatching = true;
 
-    instance._emitter.emit('changed');
+    if (Store.log) {
+      const payload = handlers ? payloads : payloads[0];
+      console.log('%c' + action._name, 'color: #F51DE3', 'dispatched with payload ', payload);
+    }
 
-    return true;
+    const previousState = _instance.state;
+
+    try {
+      // JS, dynamic style
+      if (handlers) {
+        const handler = handlers[action._id];
+        _instance.state = handler.apply(null, [_instance.state].concat(payloads));
+      }
+      // Typescript style
+      else {
+        const dispatchedAction = {
+          _id: action._id,
+          value: payloads[0],
+          is: actionIs
+        };
+        _instance.state = update(_instance.state, dispatchedAction);
+      }
+    }
+    finally {
+      if (Store.log)
+        console.log('%cNew state:', 'color: blue', _instance.state);
+
+      dispatching = false;
+    }
+
+    if (previousState !== _instance.state)
+      callbacks.forEach(callback => callback(_instance.state));
   };
 
-  instance.unregister = function() {
-    dispatcher.unregister(instance);
+  _instance.subscribe = function(callback) {
+    callbacks.push(callback);
+
+    return function unsubscribe() {
+      callbacks = callbacks.filter(_callback => _callback !== callback);
+    };
   };
 
-  return instance;
+  return _instance;
+}
+
+// Type refinement for Typescript
+function actionIs(fromDispatcher) {
+  return this._id === fromDispatcher._id;
 }
 
 
-Store.byName = dispatcher.getRegisteredStoreByName;
+let _instance;
+export function instance() {
+  return _instance;
+}

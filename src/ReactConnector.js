@@ -1,37 +1,55 @@
-import React from 'react';
-import { onChange } from './fluxx';
+import React, { createElement } from 'react';
+import shallowEqual from './shallowEqual';
 
-/* Wraps and render a Component when at least one Store changes */
 
-export default React.createClass({
+/* Wraps a React Component and re-render it when the Store changes */
 
-  componentWillMount() {
-    const storeList = this.props.stores;
+export default function connect(Component, store, stateSlicer) {
 
-    this.stores = storeList.map(store => isFunction(store) ? store(this.props) : store);
+  return class Connect extends React.Component {
 
-    const unsub = onChange.apply(null, this.stores)(_ => this.setState({}));
+    constructor(props, context) {
+      super(props, context);
+      this.state = {};
+    }
 
-    this.onUnmount = function() {
-      unsub();
-      // Also destroy (transient) stores that were created from factories
-      storeList.filter(isFunction).forEach((_, i) => this.stores[i].unregister());
-    };
-  },
+    componentWillMount() {
+      this.propsChanged = true;
 
-  componentWillUnmount() {
-    this.onUnmount();
-  },
+      this.unsubscribe = store.subscribe(this.onStoreChange.bind(this));
+      this.onStoreChange(store.state);
+    }
 
-  render() {
-    let children = this.props.children;
-    let states = this.stores.map(store => store.state);
+    componentWillUnmount() {
+      this.unsubscribe();
+    }
 
-    return children.apply(null, states);
-  }
+    componentWillReceiveProps(nextProps) {
+      if (!shallowEqual(this.props, nextProps))
+        this.propsChanged = true;
+    }
 
-});
+    onStoreChange(state) {
+      const currentState = this.state.stateSlice;
+      const newState = stateSlicer(state);
 
-function isFunction(store) {
-  return typeof store === 'function';
-}
+      if (!currentState || !shallowEqual(currentState, newState)) {
+        this.stateChanged = true;
+        this.setState({ stateSlice: newState });
+      }
+    }
+
+    render() {
+      // Combine props and state inside render() to have a cohesive view of the system:
+      // Both the store and the props given by our parents may have changed.
+      // The below check is equivalent to a delayed shouldComponentUpdate.
+      if (this.propsChanged || this.stateChanged) {
+        this.propsChanged = this.stateChanged = false;
+        const childProps = { ...this.props, ...this.state.stateSlice };
+        this.childElement = createElement(Component, childProps);
+      }
+
+      return this.childElement;
+    }
+  };
+};
