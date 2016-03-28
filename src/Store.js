@@ -17,14 +17,14 @@ export function LocalStore(optionsOrInitialState, registerHandlers) {
 }
 
 export default function Store(optionsOrInitialState, registerHandlers, isGlobal) {
-  const { state, handlers } = registerHandlers ? {} : optionsOrInitialState;
-  const initialState = registerHandlers ? optionsOrInitialState : state;
+  const { handlers } = registerHandlers ? {} : optionsOrInitialState;
+  const initialState = registerHandlers ? optionsOrInitialState : optionsOrInitialState.state;
   const onHandlers = {};
 
   let dispatching = false;
   let callbacks = [];
 
-  const instance = { state: initialState };
+  const instance = { state: initialState, log: Store.log };
 
   if (!isGlobal) {
     instance.id = localStoreId++;
@@ -37,8 +37,8 @@ export default function Store(optionsOrInitialState, registerHandlers, isGlobal)
     registerHandlers(on);
   }
 
-  if (Store.log)
-    console.log('%cInitial state:', 'color: green', state);
+  if (instance.log)
+    console.log('%cInitial state:', 'color: green', initialState);
 
   instance._handleAction = function(action, payloads) {
     if (dispatching) throw new Error(
@@ -58,7 +58,7 @@ export default function Store(optionsOrInitialState, registerHandlers, isGlobal)
         : handler(instance.state, payloads[0]);
     }
     finally {
-      if (Store.log) {
+      if (instance.log) {
         const storeKind = isGlobal ? 'global' : 'local';
         console.log(`%cNew ${storeKind} state:`, 'color: blue', instance.state);
       }

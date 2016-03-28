@@ -9,6 +9,7 @@ interface StoreStatics {
 }
 
 export interface Store<S> {
+  log: boolean;
   state: S;
   subscribe(callback: (state: S) => void): () => void;
 }

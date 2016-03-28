@@ -23,7 +23,7 @@ import { GlobalStore, Action } from 'fluxx';
 import otherStore from './otherStore';
 
 // The action names (passed in the Action factory) can be anything,
-// they're just here to help during debug (Store.log = true)
+// they're just here to help during debug (Store.log = true or store.log = true)
 const increment = Action('increment');
 const decrement = Action('decrement');
 

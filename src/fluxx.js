@@ -3,7 +3,8 @@ import _Action from './Action';
 import _Store, {
   GlobalStore as _GlobalStore,
   globalStore as _globalStore,
-  LocalStore as _LocalStore } from './Store';
+  LocalStore as _LocalStore
+} from './Store';
 
 export const Store = _Store;
 export const GlobalStore = _GlobalStore;
