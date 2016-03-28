@@ -19,7 +19,7 @@ It also has first-class support for typescript.
 ## Store
 
 ```javascript
-import { Store, Action } from 'fluxx';
+import { GlobalStore, Action } from 'fluxx';
 import otherStore from './otherStore';
 
 // The action names (passed in the Action factory) can be anything,
@@ -27,7 +27,7 @@ import otherStore from './otherStore';
 const increment = Action('increment');
 const decrement = Action('decrement');
 
-const store = Store({
+const store = GlobalStore({
   // The initial state
   state: 0,
 
@@ -180,7 +180,7 @@ Store creation
 
 ```javascript
 
-import { Store } from 'fluxx';
+import { GlobalStore } from 'fluxx';
 import update from 'immupdate';
 
 interface State {
@@ -190,25 +190,14 @@ interface State {
 
 const initialState = { count: 0, somethingElse: '' };
 
-
-function updateStore<P>(state: State, action: Action<P>): State {
-
-  if (action.is(incrementBy)) {
-    // Inside this block, action is now refined to an action dispatched by incrementBy
-    // This means action.value is of type number.
-    const { value } = action;
-    return update(state, { count: c => c + value });
-  }
-
-  return state;
-}
-
 // Create the actual store instance
-export default Store(initialState, updateStore);
+GlobalStore(initialState, on => {
+  on(action.incrementBy, (state, by) => update(state, { count: c => c + by }));
+});
 
 ```
 
-Connecting a component to the store
+Connecting a React component to the store
 
 ```javascript
 import connect from 'fluxx/lib/ReactConnector';

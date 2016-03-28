@@ -1,42 +1,42 @@
 
-interface ActionDispatcher0 {
-	(): void;
-	_id: number;
+interface OnAction<S> {
+  (action: NoArgAction, updater: (state: S) => S): void;
+  <P>(action: Action<P>, updater: (state: S, payload: P) => S): void;
 }
 
-interface ActionDispatcher1<P> {
-	(value: P): void;
-	_id: number;
+interface StoreStatics {
+  log: boolean;
 }
-
-interface DispatchedAction {
-	is(fromDispatcher: ActionDispatcher0): this is DispatchedAction0;
-	is<P>(fromDispatcher: ActionDispatcher1<P>): this is DispatchedAction1<P>;
-}
-
-interface DispatchedAction0 extends DispatchedAction {
-	_id: number;
-}
-
-interface DispatchedAction1<P> extends DispatchedAction {
-	_id: number;
-	value: P;
-}
-
-interface StoreFactory {
-	log: boolean;
-	<S>(initialState: S, update: (state: S, action: Action<any>) => S): Store<S>;
-}
-
-
-export declare type Action<P> = DispatchedAction0 | DispatchedAction1<P>;
 
 export interface Store<S> {
   state: S;
   subscribe(callback: (state: S) => void): () => void;
 }
 
-export var Store: StoreFactory;
+// Marker interface
+interface LocalStore<S> extends Store<S> {
+  _isLocalStore: any;
+}
 
-export function Action(name: string): ActionDispatcher0;
-export function Action<P>(name: string): ActionDispatcher1<P>;
+// Marker interface
+interface GlobalStore<S> extends Store<S> {
+  _isGlobalStore: any;
+}
+
+interface LocalStoreFactory {
+	<S>(initialState: S, registerActions: (on: OnAction<S>) => void): LocalStore<S>;
+}
+
+interface GlobalStoreFactory {
+  <S>(initialState: S, registerActions: (on: OnAction<S>) => void): GlobalStore<S>;
+}
+
+export var Store: StoreStatics;
+export var GlobalStore: GlobalStoreFactory;
+export var LocalStore: LocalStoreFactory;
+
+export type NoArgAction = () => void;
+export type Action<P> = (payload: P) => void;
+
+export function Action(name: string): NoArgAction;
+export function Action<P>(name: string): Action<P>;

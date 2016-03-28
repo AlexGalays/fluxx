@@ -1,4 +1,4 @@
-import { instance } from './Store';
+import Store, { globalStore, localStores } from './Store';
 
 // Unique Action ids.
 // This removes the need to provide unique names across the whole application.
@@ -10,8 +10,8 @@ let id = 1;
 * The returned action function can then be used to dispatch one or more payloads.
 *
 * Ex:
-* var ClickThread = Action('clickThread'); // Create the action once
-* ClickThread(id); // Dispatch a payload any number of times
+* var clickThread = Action('clickThread'); // Create the action once
+* clickThread(id); // Dispatch a payload any number of times
 */
 export default function Action(name) {
 
@@ -19,11 +19,26 @@ export default function Action(name) {
   function action() {
     let payloads = [].slice.call(arguments);
 
-    const store = instance();
+    const isGlobalAction = action._store === undefined;
+
+    // Dispatch to our local store if we were given one or default to the global store.
+    const store = isGlobalAction ? globalStore() : action._store;
+
     if (!store)
-      throw new Error(`Tried to dispatch an action ($name) without an instanciated store`);
+      throw new Error(`Tried to dispatch an action (${action._name}) without an instanciated store`);
+
+    if (Store.log) {
+      const payload = payloads.length > 1 ? payloads : payloads[0];
+      console.log('%c' + action._name, 'color: #F51DE3', 'dispatched with payload ', payload);
+    }
 
     store._handleAction(action, payloads);
+
+    // Give a chance to all local Stores to react to this global Action
+    if (isGlobalAction) {
+      Object.keys(localStores).forEach(id =>
+        localStores[id]._handleAction(action, payloads));
+    }
   }
 
   action._id = id++;

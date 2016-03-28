@@ -1,77 +1,83 @@
 
-/**
-* Creates the store singleton.
-*/
-export default function Store(optionsOrInitialState, update) {
-  const { state, handlers } = update ? {} : optionsOrInitialState;
-  const initialState = update ? optionsOrInitialState : state;
+let _globalStore;
+export function globalStore() {
+  return _globalStore;
+}
+
+let localStoreId = 1;
+export let localStores = {};
+
+export function GlobalStore(optionsOrInitialState, registerHandlers) {
+  _globalStore = Store(optionsOrInitialState, registerHandlers, true);
+  return _globalStore;
+}
+
+export function LocalStore(optionsOrInitialState, registerHandlers) {
+  return Store(optionsOrInitialState, registerHandlers);
+}
+
+export default function Store(optionsOrInitialState, registerHandlers, isGlobal) {
+  const { state, handlers } = registerHandlers ? {} : optionsOrInitialState;
+  const initialState = registerHandlers ? optionsOrInitialState : state;
+  const onHandlers = {};
 
   let dispatching = false;
   let callbacks = [];
 
-  _instance = { state: initialState };
+  const instance = { state: initialState };
+
+  if (!isGlobal) {
+    instance.id = localStoreId++;
+    localStores[instance.id] = instance;
+  }
+
+  // on(action, callback) registration style
+  if (registerHandlers) {
+    const on = (action, fn) => { onHandlers[action] = fn }
+    registerHandlers(on);
+  }
 
   if (Store.log)
     console.log('%cInitial state:', 'color: green', state);
 
-  _instance._handleAction = function(action, payloads) {
+  instance._handleAction = function(action, payloads) {
     if (dispatching) throw new Error(
       'Cannot dispatch an Action in the middle of another Action\'s dispatch');
 
+    // Bail fast if this store isn't interested.
+    const handler = handlers ? handlers[action._id] : onHandlers[action._id];
+    if (!handler) return;
+
     dispatching = true;
 
-    if (Store.log) {
-      const payload = handlers ? payloads : payloads[0];
-      console.log('%c' + action._name, 'color: #F51DE3', 'dispatched with payload ', payload);
-    }
-
-    const previousState = _instance.state;
+    const previousState = instance.state;
 
     try {
-      // JS, dynamic style
-      if (handlers) {
-        const handler = handlers[action._id];
-        _instance.state = handler.apply(null, [_instance.state].concat(payloads));
-      }
-      // Typescript style
-      else {
-        const dispatchedAction = {
-          _id: action._id,
-          value: payloads[0],
-          is: actionIs
-        };
-        _instance.state = update(_instance.state, dispatchedAction);
-      }
+      instance.state = handlers
+        ? handler.apply(null, [instance.state].concat(payloads))
+        : handler(instance.state, payloads[0]);
     }
     finally {
-      if (Store.log)
-        console.log('%cNew state:', 'color: blue', _instance.state);
+      if (Store.log) {
+        const storeKind = isGlobal ? 'global' : 'local';
+        console.log(`%cNew ${storeKind} state:`, 'color: blue', instance.state);
+      }
 
       dispatching = false;
     }
 
-    if (previousState !== _instance.state)
-      callbacks.forEach(callback => callback(_instance.state));
+    if (previousState !== instance.state)
+      callbacks.forEach(callback => callback(instance.state));
   };
 
-  _instance.subscribe = function(callback) {
+  instance.subscribe = function(callback) {
     callbacks.push(callback);
 
     return function unsubscribe() {
       callbacks = callbacks.filter(_callback => _callback !== callback);
+      if (!isGlobal && callbacks.length === 0) delete localStores[instance.id];
     };
   };
 
-  return _instance;
-}
-
-// Type refinement for Typescript
-function actionIs(fromDispatcher) {
-  return this._id === fromDispatcher._id;
-}
-
-
-let _instance;
-export function instance() {
-  return _instance;
+  return instance;
 }

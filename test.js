@@ -1,7 +1,7 @@
-var assert     = require('better-assert'),
-    fluxx      = require('../fluxx'),
-    Store      = fluxx.Store,
-    Action     = fluxx.Action;
+var assert      = require('better-assert'),
+    fluxx       = require('../fluxx'),
+    GlobalStore = fluxx.GlobalStore,
+    Action      = fluxx.Action;
 
 
 const createActions = function() {
@@ -16,7 +16,6 @@ suite('fluxx', function() {
   test('Store', function() {
 
     var fired = 0;
-    var caughtError = false;
     var action = createActions('increment', 'decrement', 'noop', 'ignored');
 
     function makeStore() {
@@ -26,7 +25,7 @@ suite('fluxx', function() {
       handlers[action.decrement] = function(counter, by) { return counter - by };
       handlers[action.noop]      = function(counter) { return counter };
 
-      return Store({
+      return GlobalStore({
         state: 0,
         handlers: handlers
       });
@@ -46,17 +45,9 @@ suite('fluxx', function() {
     assert(store.state == 10);
 
     // Unhandled actions do not trigger a change event
-    try {
-      action.ignored();
-    }
-    catch(e) {
-      caughtError = true;
-    }
-
-    assert(caughtError);
+    action.ignored();
     assert(fired == 1);
     assert(store.state == 10);
-    caughtError = false;
 
     // Noop action
     action.noop();
@@ -89,7 +80,7 @@ suite('fluxx', function() {
         return clone;
       };
 
-      return Store({
+      return GlobalStore({
         handlers: handlers
       });
     }
