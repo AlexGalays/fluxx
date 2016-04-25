@@ -16,8 +16,10 @@ export default function connect(Component, store, stateSlicer) {
     componentWillMount() {
       this.propsChanged = true;
 
-      this.unsubscribe = store.subscribe(this.onStoreChange.bind(this));
-      this.onStoreChange(store.state);
+      this.store = isFunction(store) ? store(this.props) : store;
+
+      this.unsubscribe = this.store.subscribe(this.onStoreChange.bind(this));
+      this.onStoreChange(this.store.state);
     }
 
     componentWillUnmount() {
@@ -53,3 +55,7 @@ export default function connect(Component, store, stateSlicer) {
     }
   };
 };
+
+function isFunction(x) {
+  return Object.prototype.toString.call(x) === '[object Function]';
+}
