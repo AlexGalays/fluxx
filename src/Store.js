@@ -37,9 +37,6 @@ export default function Store(optionsOrInitialState, registerHandlers, isGlobal)
     registerHandlers(on);
   }
 
-  if (instance.log)
-    console.log('%cInitial state:', 'color: green', initialState);
-
   instance._handleAction = function(action, payloads) {
     if (dispatching) throw new Error(
       'Cannot dispatch an Action in the middle of another Action\'s dispatch');
@@ -49,6 +46,12 @@ export default function Store(optionsOrInitialState, registerHandlers, isGlobal)
     if (!handler) return;
 
     dispatching = true;
+
+
+    if (instance.log) {
+      const payload = payloads.length > 1 ? payloads : payloads[0];
+      console.log('%c' + action._name, 'color: #F51DE3', 'dispatched with payload ', payload);
+    }
 
     const previousState = instance.state;
 
@@ -72,6 +75,9 @@ export default function Store(optionsOrInitialState, registerHandlers, isGlobal)
 
   instance.subscribe = function(callback) {
     callbacks.push(callback);
+    
+    if (instance.log)
+      console.log('%cInitial state:', 'color: green', initialState);
 
     return function unsubscribe() {
       callbacks = callbacks.filter(_callback => _callback !== callback);

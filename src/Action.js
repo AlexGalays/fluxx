@@ -27,11 +27,6 @@ export default function Action(name) {
     if (!store)
       throw new Error(`Tried to dispatch an action (${action._name}) without an instanciated store`);
 
-    if (Store.log) {
-      const payload = payloads.length > 1 ? payloads : payloads[0];
-      console.log('%c' + action._name, 'color: #F51DE3', 'dispatched with payload ', payload);
-    }
-
     store._handleAction(action, payloads);
 
     // Give a chance to all local Stores to react to this global Action
