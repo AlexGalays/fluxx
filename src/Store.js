@@ -81,7 +81,10 @@ export default function Store(optionsOrInitialState, registerHandlers, isGlobal)
 
     return function unsubscribe() {
       callbacks = callbacks.filter(_callback => _callback !== callback);
-      if (!isGlobal && callbacks.length === 0) delete localStores[instance.id];
+      if (!isGlobal && callbacks.length === 0) {
+        delete localStores[instance.id];
+        if (instance.onDispose) instance.onDispose();
+      }
     };
   };
 

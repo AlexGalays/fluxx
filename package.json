@@ -1,6 +1,6 @@
 {
   "name": "fluxx",
-  "version": "0.14.2",
+  "version": "0.14.3",
   "main": "lib/fluxx",
   "typings": "lib/fluxx.d.ts",
   "description": "Terse application state management",

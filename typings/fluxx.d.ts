@@ -14,12 +14,11 @@ export interface Store<S> {
   subscribe(callback: (state: S) => void): () => void;
 }
 
-// Marker interface
 interface LocalStore<S> extends Store<S> {
   _isLocalStore: any;
+  onDispose: () => void;
 }
 
-// Marker interface
 interface GlobalStore<S> extends Store<S> {
   _isGlobalStore: any;
 }
