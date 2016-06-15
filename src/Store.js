@@ -23,8 +23,13 @@ export default function Store(optionsOrInitialState, registerHandlers, isGlobal)
 
   let dispatching = false;
   let callbacks = [];
+  let disposeCb;
 
-  const instance = { state: initialState, log: Store.log };
+  const instance = {
+    state: initialState,
+    log: Store.log,
+    onDispose: cb => { disposeCb = cb; return instance; }
+  };
 
   if (!isGlobal) {
     instance.id = localStoreId++;
@@ -83,7 +88,7 @@ export default function Store(optionsOrInitialState, registerHandlers, isGlobal)
       callbacks = callbacks.filter(_callback => _callback !== callback);
       if (!isGlobal && callbacks.length === 0) {
         delete localStores[instance.id];
-        if (instance.onDispose) instance.onDispose();
+        if (disposeCb) disposeCb();
       }
     };
   };

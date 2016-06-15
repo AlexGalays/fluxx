@@ -16,7 +16,7 @@ export interface Store<S> {
 
 interface LocalStore<S> extends Store<S> {
   _isLocalStore: any;
-  onDispose: () => void;
+  onDispose(cb: Function): LocalStore<S>;
 }
 
 interface GlobalStore<S> extends Store<S> {
