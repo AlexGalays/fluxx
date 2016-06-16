@@ -4,22 +4,26 @@ import shallowEqual from './shallowEqual';
 
 /* Wraps a React Component and re-render it when the Store changes */
 
-export default function connect(Component, store, stateSlicer) {
+export default function connect(Component, stores, stateSlicer) {
 
   return class Connect extends React.Component {
 
     constructor(props, context) {
       super(props, context);
       this.state = {};
+      this.onStoreChange = this.onStoreChange.bind(this);
     }
 
     componentWillMount() {
       this.propsChanged = true;
 
-      this.store = isFunction(store) ? store(this.props) : store;
+      if (!Array.isArray(stores)) stores = [stores];
+      this.stores = stores.map(store => isFunction(store) ? store(this.props) : store);
 
-      this.unsubscribe = this.store.subscribe(this.onStoreChange.bind(this));
-      this.onStoreChange(this.store.state);
+      this.unsubscribe = this.subscribeToStores(this.stores);
+
+      // Initial render
+      this.onStoreChange();
     }
 
     componentWillUnmount() {
@@ -31,13 +35,22 @@ export default function connect(Component, store, stateSlicer) {
         this.propsChanged = true;
     }
 
-    onStoreChange(state) {
-      const currentState = this.state.stateSlice;
-      const newState = stateSlicer(state);
+    subscribeToStores(stores) {
+      const unsubFns = stores.map(store => store.subscribe(this.onStoreChange));
 
-      if (!currentState || !shallowEqual(currentState, newState)) {
+      return function() {
+        unsubFns.forEach(fn => fn());
+      }
+    }
+
+    onStoreChange() {
+      const states = this.stores.map(store => store.state);
+      const currentSlice = this.state.stateSlice;
+      const newSlice = stateSlicer.apply(null, states);
+
+      if (!currentSlice || !shallowEqual(currentSlice, newSlice)) {
         this.stateChanged = true;
-        this.setState({ stateSlice: newState });
+        this.setState({ stateSlice: newSlice });
       }
     }
 
@@ -55,6 +68,8 @@ export default function connect(Component, store, stateSlicer) {
     }
   };
 };
+
+
 
 function isFunction(x) {
   return Object.prototype.toString.call(x) === '[object Function]';
