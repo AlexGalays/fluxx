@@ -1,6 +1,6 @@
 {
   "name": "fluxx",
-  "version": "0.14.6",
+  "version": "0.14.7",
   "main": "lib/fluxx",
   "typings": "lib/fluxx.d.ts",
   "description": "Terse application state management",
@@ -23,9 +23,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/AlexGalays/fluxx.git"
-  },
-  "peerDependencies": {
-    "react": "^0.14.0"
   },
   "devDependencies": {
     "babel-cli": "6.4.5",
