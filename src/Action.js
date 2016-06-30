@@ -19,8 +19,12 @@ export default function Action(name) {
   function action() {
     let payloads = [].slice.call(arguments);
 
-    Object.keys(stores).forEach(id =>
-      stores[id]._handleAction(action, payloads));
+    Object.keys(stores).forEach(id => {
+      const store = stores[id];
+      // A previous handler may have resulted in another store's disposal
+      if (!store) return;
+      store._handleAction(action, payloads)
+    });
   }
 
   action._id = id++;
