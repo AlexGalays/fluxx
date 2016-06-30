@@ -1,20 +1,16 @@
 
-let _globalStore;
-export function globalStore() {
-  return _globalStore;
-}
+let storeId = 1;
+export let stores = {};
 
-let localStoreId = 1;
-export let localStores = {};
 
 export function GlobalStore(optionsOrInitialState, registerHandlers) {
-  _globalStore = Store(optionsOrInitialState, registerHandlers, true);
-  return _globalStore;
+  return Store(optionsOrInitialState, registerHandlers, true);
 }
 
 export function LocalStore(optionsOrInitialState, registerHandlers) {
   return Store(optionsOrInitialState, registerHandlers);
 }
+
 
 export default function Store(optionsOrInitialState, registerHandlers, isGlobal) {
   const { handlers } = registerHandlers ? {} : optionsOrInitialState;
@@ -31,10 +27,8 @@ export default function Store(optionsOrInitialState, registerHandlers, isGlobal)
     onDispose: cb => { disposeCb = cb; return instance; }
   };
 
-  if (!isGlobal) {
-    instance.id = localStoreId++;
-    localStores[instance.id] = instance;
-  }
+  instance.id = storeId++;
+  stores[instance.id] = instance;
 
   // on(action, callback) registration style
   if (registerHandlers) {
@@ -51,7 +45,6 @@ export default function Store(optionsOrInitialState, registerHandlers, isGlobal)
     if (!handler) return;
 
     dispatching = true;
-
 
     if (instance.log) {
       const payload = payloads.length > 1 ? payloads : payloads[0];
@@ -80,14 +73,16 @@ export default function Store(optionsOrInitialState, registerHandlers, isGlobal)
 
   instance.subscribe = function(callback) {
     callbacks.push(callback);
-    
+
     if (instance.log)
       console.log('%cInitial state:', 'color: green', initialState);
 
     return function unsubscribe() {
       callbacks = callbacks.filter(_callback => _callback !== callback);
+
+      // Global stores remain active forever, but not local stores
       if (!isGlobal && callbacks.length === 0) {
-        delete localStores[instance.id];
+        delete stores[instance.id];
         if (disposeCb) disposeCb();
       }
     };

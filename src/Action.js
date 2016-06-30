@@ -1,4 +1,4 @@
-import Store, { globalStore, localStores } from './Store';
+import { stores } from './Store';
 
 // Unique Action ids.
 // This removes the need to provide unique names across the whole application.
@@ -19,21 +19,8 @@ export default function Action(name) {
   function action() {
     let payloads = [].slice.call(arguments);
 
-    const isGlobalAction = action._store === undefined;
-
-    // Dispatch to our local store if we were given one or default to the global store.
-    const store = isGlobalAction ? globalStore() : action._store;
-
-    if (!store)
-      throw new Error(`Tried to dispatch an action (${action._name}) without an instanciated store`);
-
-    store._handleAction(action, payloads);
-
-    // Give a chance to all local Stores to react to this global Action
-    if (isGlobalAction) {
-      Object.keys(localStores).forEach(id =>
-        localStores[id]._handleAction(action, payloads));
-    }
+    Object.keys(stores).forEach(id =>
+      stores[id]._handleAction(action, payloads));
   }
 
   action._id = id++;
