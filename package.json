@@ -37,5 +37,6 @@
     "copy-typings": "mkdir -p lib && cp typings/fluxx.d.ts lib && cp typings/ReactConnector.d.ts lib",
     "build": "npm run copy-typings && node node_modules/babel-cli/bin/babel.js src --out-dir lib",
     "test": "npm run build && mocha --ui tdd"
-  }
+  },
+  "files": ["lib"]
 }
