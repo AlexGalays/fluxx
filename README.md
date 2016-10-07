@@ -18,14 +18,20 @@ It also has first-class support for typescript.
 <a name="store"></a>
 ## Store
 
+There are two kinds of Stores.
+
+### GlobalStore
+
+GlobalStores hold global state, are always active and can be depended upon by many views.  
+
 ```javascript
-import { GlobalStore, Action } from 'fluxx';
-import otherStore from './otherStore';
+import { GlobalStore, Action } from 'fluxx'
+import otherStore from './otherStore'
 
 // The action names (passed in the Action factory) can be anything,
 // they're just here to help during debug (Store.log = true or store.log = true)
-const increment = Action('increment');
-const decrement = Action('decrement');
+const increment = Action('increment')
+const decrement = Action('decrement')
 
 const store = GlobalStore({
   // The initial state
@@ -38,12 +44,22 @@ const store = GlobalStore({
   }
 });
 
-action.increment(30);
-action.decrement(5);
+store.subscribe(newState => console.log(newState))
 
-console.log(store.state === 25);
+action.increment(30)
+action.decrement(5)
 
+console.log(store.state === 25)
 ```
+
+### LocalStore
+
+`LocalStore`s are transient stores that should be created when its view needs it and destroyed when that view is no longer displayed.  
+They have the same API as `GlobalStore`s, and an additional `onDispose` callback, which is called when the last `unsubscribe` function (returned from a `subscribe` call) is invoked.
+
+Important note: Inside stores, Received actions are matched by reference, so it is best to only use `LocalStore`s for singleton views, and not reusable components.  
+Otherwise, one action dispatched by one of the views would be received by all the currently active LocalStore instances of the same kind.  
+
 
 <a name="preventChangeEvent"></a>
 ### Preventing the store from dispatching the change event
@@ -55,18 +71,18 @@ Simply return the same state reference in the update handler and the store won't
 ## Manually redrawing the view on store change
 ```javascript
 
-import { store, action } from './valueStore';
+import { store, action } from './valueStore'
 
 // Render again whenever the store changes
-const unsubscribe = store.subscribe(render);
+const unsubscribe = store.subscribe(render)
 
 function render() {
-  console.log('render!');
+  console.log('render!')
   // Actually render a component using React, virtual-dom, etc
 }
 
 // Trigger the increment action: Increment store's value by 33
-action.increment(33);
+action.increment(33)
 
 ```
 <a name="asyncActions"></a>
@@ -84,13 +100,13 @@ import { savingTodo, todoSaved, todoSaveFailed } from './actions';
 export default function(todo) {
   // Tell the store we're about to attempt persisting a new todo on the server.
   // Could be used to optimistically add the todo on screen and/or show a progress indicator
-  savingTodo(todo);
+  savingTodo(todo)
 
   fetch('/todos', { method: 'post', body: todo })
     // Tell the store the todo was successfully saved: Remove the progress indicator
     .then(res => todoSaved(todo))
     // Tell the store there was an error while saving the todo, mark the todo as local only, display errors, offer retry, etc.
-    .catch(err => todoSaveFailed(todo));
+    .catch(err => todoSaveFailed(todo))
 }
 ```
 
@@ -117,30 +133,33 @@ As a rule of thumb, connect at least the smart components managing a particular 
 smart component that needs some data its parents don't.  
 
 ```javascript
-import connect from 'fluxx/lib/ReactConnector';
+import connect from 'fluxx/lib/ReactConnector'
 
 // Your store instance; also import an Action
-import store, { incrementBy } from './store';
+import store, { incrementBy } from './store'
 
 
 class Blue extends React.Component {
-	render() {
-		const { count } = this.props;
+  render() {
+    const { count } = this.props
 
-		return (
+    return (
       <p onClick={ incrementBy10 }>{ count }</p>
-		);
-	}
-};
+    )
+  }
+}
 
 function incrementBy10() { incrementBy(10) }
 
 // Takes a component, the store instance and a function returning the slice of data we're interested in.
 export default connect(Blue, store, state => (
-	{ count: state.blue.count }
-));
+  { count: state.blue.count }
+))
 
 ```
+
+`connect` can work with either `GlobalStore` or `LocalStore` instances. A `LocalStore` should be wrapped inside a function so that the wrapping component can create a new `Store`
+instance everytime the component is mounted. That function is passed the view's initial `props` as its only argument.
 
 
 ## Enabling logging
@@ -148,8 +167,8 @@ export default connect(Blue, store, state => (
 This will log all action dispatching along with the updated state of the store afterwards.
 
 ```javascript
-import { Store } from 'fluxx';
-Store.log = true;
+import { Store } from 'fluxx'
+Store.log = true
 ```
 
 <a name="fullExample"></a>
@@ -166,55 +185,55 @@ However, to achieve that, a few changes are required compared to using fluxx wit
 Action declaration
 
 ```javascript
-import { Action } from 'fluxx';
+import { Action } from 'fluxx'
 
 // Declare an action that takes no argument
-export const increment = Action('increment');
+export const increment = Action('increment')
 
 // Declare an action that takes an argument of type number.
 // It could of course be any custom type as well.
-export const incrementBy = Action<number>('incrementBy');
+export const incrementBy = Action<number>('incrementBy')
 ```
 
 Store creation
 
 ```javascript
 
-import { GlobalStore } from 'fluxx';
-import update from 'immupdate';
+import { GlobalStore } from 'fluxx'
+import update from 'immupdate'
 
 interface State {
   count: number,
   somethingElse: string
 }
 
-const initialState = { count: 0, somethingElse: '' };
+const initialState = { count: 0, somethingElse: '' }
 
 // Create the actual store instance
 GlobalStore(initialState, on => {
-  on(action.incrementBy, (state, by) => update(state, { count: c => c + by }));
-});
+  on(action.incrementBy, (state, by) => update(state, { count: c => c + by }))
+})
 
 ```
 
 Connecting a React component to the store
 
 ```javascript
-import connect from 'fluxx/lib/ReactConnector';
+import connect from 'fluxx/lib/ReactConnector'
 
 // Your store instance; also import an Action
-import store, { incrementBy } from './store';
+import store, { incrementBy } from './store'
 
 // Declare the props our parent should give us
 interface ParentProps {
-	params: { id: string },
-	children: React.ReactElement<any>
+  params: { id: string },
+  children: React.ReactElement<any>
 }
 
 // Declare our "own" props,
 // that is the store's slice of state that get injected to our props by connect.
 interface StoreProps {
-	count: number
+  count: number
 }
 
 // Our final props is the combination of the two prop sources.
@@ -222,24 +241,23 @@ interface StoreProps {
 type Props = ParentProps & StoreProps;
 
 class Blue extends React.Component<Props, void> {
-	render() {
-
+  render() {
     // Type safe deconstruction
-		const { count, params: { id } } = this.props;
+    const { count, params: { id } } = this.props
 
     return (
       <p onClick={ incrementBy10 }>{ count }</p>
-		);
-	}
-};
+    )
+  }
+}
 
 // Action dispatching is also type-safe: we could not pass anything other than a number here.
 function incrementBy10() { incrementBy(10) }
 
 
 export default connect(Blue, store, (state): StoreProps => (
-	{ count: state.count }
-));
+  { count: state.count }
+))
 
 ```
 
