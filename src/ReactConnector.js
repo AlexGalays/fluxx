@@ -15,6 +15,7 @@ export default function connect(Component, stores, stateSlicer) {
     }
 
     componentWillMount() {
+      this.mounted = true;
       this.propsChanged = true;
 
       if (!Array.isArray(stores)) stores = [stores];
@@ -23,10 +24,11 @@ export default function connect(Component, stores, stateSlicer) {
       this.unsubscribe = this.subscribeToStores(this.stores);
 
       // Initial render
-      this.onStoreChange();
+      this.updateFromStores();
     }
 
     componentWillUnmount() {
+      this.mounted = false;
       this.unsubscribe();
     }
 
@@ -44,19 +46,24 @@ export default function connect(Component, stores, stateSlicer) {
     }
 
     onStoreChange() {
-      if (!this.nextRedraw) {
-        this.nextRedraw = requestAnimationFrame(() => {
-          this.nextRedraw = undefined
+      if (this.nextRedraw) return
 
-          const states = this.stores.map(store => store.state);
-          const currentSlice = this.state.stateSlice;
-          const newSlice = stateSlicer.apply(null, states);
+      this.nextRedraw = requestAnimationFrame(() => {
+        this.nextRedraw = undefined
 
-          if (!currentSlice || !shallowEqual(currentSlice, newSlice)) {
-            this.stateChanged = true;
-            this.setState({ stateSlice: newSlice });
-          }
-        })
+        if (this.mounted)
+          this.updateFromStores()
+      })
+    }
+
+    updateFromStores() {
+      const states = this.stores.map(store => store.state);
+      const currentSlice = this.state.stateSlice;
+      const newSlice = stateSlicer.apply(null, states);
+
+      if (!currentSlice || !shallowEqual(currentSlice, newSlice)) {
+        this.stateChanged = true;
+        this.setState({ stateSlice: newSlice });
       }
     }
 
