@@ -44,19 +44,13 @@ export default function connect(Component, stores, stateSlicer) {
     }
 
     onStoreChange() {
-      if (!this.nextRedraw) {
-        this.nextRedraw = requestAnimationFrame(() => {
-          this.nextRedraw = undefined
+      const states = this.stores.map(store => store.state);
+      const currentSlice = this.state.stateSlice;
+      const newSlice = stateSlicer.apply(null, states);
 
-          const states = this.stores.map(store => store.state);
-          const currentSlice = this.state.stateSlice;
-          const newSlice = stateSlicer.apply(null, states);
-
-          if (!currentSlice || !shallowEqual(currentSlice, newSlice)) {
-            this.stateChanged = true;
-            this.setState({ stateSlice: newSlice });
-          }
-        })
+      if (!currentSlice || !shallowEqual(currentSlice, newSlice)) {
+        this.stateChanged = true;
+        this.setState({ stateSlice: newSlice });
       }
     }
 
