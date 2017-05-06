@@ -1,5 +1,4 @@
-
-import React = __React;
+import * as React from 'react';
 import { Store as StoreInstance } from './fluxx';
 
 
